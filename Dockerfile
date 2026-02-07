@@ -12,6 +12,7 @@ RUN --mount=type=cache,target=/root/.cache/yarn \
 ARG NODE_ENV=production
 
 RUN npm_config_target_arch=${TARGETARCH} yarn build:app:docker
+RUN npm_config_target_arch=${TARGETARCH} yarn --cwd backend prisma:generate
 RUN npm_config_target_arch=${TARGETARCH} yarn --cwd backend build
 
 FROM --platform=${TARGETPLATFORM} nginx:1.27-alpine
