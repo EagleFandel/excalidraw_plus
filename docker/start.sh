@@ -1,6 +1,19 @@
 #!/bin/sh
 set -eu
 
+echo "[entrypoint] rendering nginx config with PORT=${PORT:-80}, API_UPSTREAM=${API_UPSTREAM:-http://127.0.0.1:3005}"
+
+if [ -f /etc/nginx/templates/default.conf.template ]; then
+  if command -v envsubst >/dev/null 2>&1; then
+    envsubst '${PORT} ${API_UPSTREAM}' \
+      < /etc/nginx/templates/default.conf.template \
+      > /etc/nginx/conf.d/default.conf
+  else
+    echo "[entrypoint] envsubst not found"
+    exit 1
+  fi
+fi
+
 echo "[entrypoint] starting backend on ${BACKEND_HOST:-127.0.0.1}:${BACKEND_PORT:-3005}"
 
 node /opt/node_app/backend/dist/main.js &
