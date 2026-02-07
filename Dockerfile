@@ -17,4 +17,10 @@ FROM --platform=${TARGETPLATFORM} nginx:1.27-alpine
 
 COPY --from=build /opt/node_app/excalidraw-app/build /usr/share/nginx/html
 
-HEALTHCHECK CMD wget -q -O /dev/null http://localhost || exit 1
+ENV PORT=80
+
+COPY docker/nginx/default.conf.template /etc/nginx/templates/default.conf.template
+
+EXPOSE 80
+
+HEALTHCHECK CMD wget -q -O /dev/null http://localhost:${PORT}/ || exit 1
