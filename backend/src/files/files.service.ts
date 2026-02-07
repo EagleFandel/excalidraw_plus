@@ -1,5 +1,12 @@
-import { prisma } from "../prisma.js";
-import { TeamsService } from "../teams/teams.service.js";
+import { Injectable } from "@nestjs/common";
+
+import {
+  FileNotFoundError,
+  ForbiddenError,
+  VersionConflictError,
+} from "../common/exceptions/domain-errors";
+import { PrismaService } from "../prisma/prisma.service";
+import { TeamsService } from "../teams/teams.service";
 
 import type { File, FileContent, Prisma } from "@prisma/client";
 
@@ -24,27 +31,6 @@ type FileScope = "personal" | "team";
 type FileWithOptionalContent = File & {
   content: Pick<FileContent, "scene"> | null;
 };
-
-class FileNotFoundError extends Error {
-  constructor() {
-    super("FILE_NOT_FOUND");
-  }
-}
-
-class ForbiddenError extends Error {
-  constructor() {
-    super("FORBIDDEN");
-  }
-}
-
-class VersionConflictError extends Error {
-  currentVersion: number;
-
-  constructor(currentVersion: number) {
-    super("VERSION_CONFLICT");
-    this.currentVersion = currentVersion;
-  }
-}
 
 const mapFileRecord = (file: FileWithOptionalContent, includeScene = false) => {
   const base = {
@@ -71,11 +57,15 @@ const mapFileRecord = (file: FileWithOptionalContent, includeScene = false) => {
   };
 };
 
+@Injectable()
 export class FilesService {
-  constructor(private readonly teamsService = new TeamsService()) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly teamsService: TeamsService,
+  ) {}
 
   async listPersonalFiles(ctx: AuthContext) {
-    const files = await prisma.file.findMany({
+    const files = await this.prisma.file.findMany({
       where: {
         ownerUserId: ctx.userId,
         teamId: null,
@@ -108,7 +98,7 @@ export class FilesService {
       }
     }
 
-    const file = await prisma.file.create({
+    const file = await this.prisma.file.create({
       data: {
         title,
         ownerUserId: ctx.userId,
@@ -128,7 +118,7 @@ export class FilesService {
   }
 
   async getFile(ctx: AuthContext, fileId: string) {
-    const file = await prisma.file.findUnique({
+    const file = await this.prisma.file.findUnique({
       where: { id: fileId },
       include: {
         content: true,
@@ -141,7 +131,7 @@ export class FilesService {
 
     await this.assertAccess(ctx.userId, file.ownerUserId, file.teamId, "read");
 
-    await prisma.file.update({
+    await this.prisma.file.update({
       where: {
         id: fileId,
       },
@@ -162,7 +152,7 @@ export class FilesService {
       scene: FileScenePayload;
     },
   ) {
-    const existing = await prisma.file.findUnique({
+    const existing = await this.prisma.file.findUnique({
       where: {
         id: input.fileId,
       },
@@ -185,7 +175,7 @@ export class FilesService {
 
     const nextVersion = existing.version + 1;
 
-    const file = await prisma.file.update({
+    const file = await this.prisma.file.update({
       where: {
         id: input.fileId,
       },
@@ -212,7 +202,7 @@ export class FilesService {
   }
 
   async trashFile(ctx: AuthContext, fileId: string) {
-    const existing = await prisma.file.findUnique({
+    const existing = await this.prisma.file.findUnique({
       where: { id: fileId },
     });
 
@@ -227,7 +217,7 @@ export class FilesService {
       "write",
     );
 
-    await prisma.file.update({
+    await this.prisma.file.update({
       where: {
         id: fileId,
       },
@@ -261,7 +251,7 @@ export class FilesService {
         throw new ForbiddenError();
       }
 
-      const files = await prisma.file.findMany({
+      const files = await this.prisma.file.findMany({
         where: {
           teamId,
           isTrashed: includeTrashed ? undefined : false,
@@ -273,7 +263,7 @@ export class FilesService {
       return files.map((file) => mapFileRecord({ ...file, content: null }));
     }
 
-    const files = await prisma.file.findMany({
+    const files = await this.prisma.file.findMany({
       where: {
         ownerUserId: ctx.userId,
         teamId: null,
@@ -287,7 +277,7 @@ export class FilesService {
   }
 
   async restoreFile(ctx: AuthContext, fileId: string) {
-    const existing = await prisma.file.findUnique({
+    const existing = await this.prisma.file.findUnique({
       where: {
         id: fileId,
       },
@@ -304,7 +294,7 @@ export class FilesService {
       "write",
     );
 
-    const file = await prisma.file.update({
+    const file = await this.prisma.file.update({
       where: {
         id: fileId,
       },
@@ -321,7 +311,7 @@ export class FilesService {
   }
 
   async permanentlyDeleteFile(ctx: AuthContext, fileId: string) {
-    const existing = await prisma.file.findUnique({
+    const existing = await this.prisma.file.findUnique({
       where: {
         id: fileId,
       },
@@ -338,7 +328,7 @@ export class FilesService {
       "write",
     );
 
-    await prisma.file.delete({
+    await this.prisma.file.delete({
       where: {
         id: fileId,
       },
@@ -346,7 +336,7 @@ export class FilesService {
   }
 
   async setFavorite(ctx: AuthContext, fileId: string, isFavorite: boolean) {
-    const existing = await prisma.file.findUnique({
+    const existing = await this.prisma.file.findUnique({
       where: {
         id: fileId,
       },
@@ -363,7 +353,7 @@ export class FilesService {
       "write",
     );
 
-    const file = await prisma.file.update({
+    const file = await this.prisma.file.update({
       where: {
         id: fileId,
       },
@@ -401,5 +391,3 @@ export class FilesService {
     }
   }
 }
-
-export { ForbiddenError, FileNotFoundError, VersionConflictError };

@@ -4,7 +4,7 @@ This backend provides auth, personal/team file APIs, and basic team management.
 
 ## Tech Stack
 
-- Express + TypeScript
+- NestJS + TypeScript
 - Prisma + PostgreSQL
 - JWT (HttpOnly Cookie)
 - Argon2 password hashing
@@ -40,31 +40,32 @@ yarn --cwd backend prisma:migrate --name add_teams_and_file_lifecycle
 yarn start:backend
 ```
 
-Server default: `http://localhost:3005`
+Server default: `http://localhost:3005/api`
 
 ## Endpoints
 
-- `POST /auth/register`
-- `POST /auth/login`
-- `POST /auth/logout`
-- `GET /auth/me`
-- `GET /files?scope=personal|team`
-- `POST /files`
-- `GET /files/:id`
-- `PUT /files/:id`
-- `DELETE /files/:id`
-- `POST /files/:id/restore`
-- `DELETE /files/:id/permanent`
-- `PATCH /files/:id/favorite`
-- `GET /teams`
-- `POST /teams`
-- `GET /teams/:id/members`
-- `POST /teams/:id/members`
-- `PATCH /teams/:id/members/:userId`
-- `DELETE /teams/:id/members/:userId`
-- `GET /health`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET /api/files?scope=personal|team`
+- `POST /api/files`
+- `GET /api/files/:id`
+- `PUT /api/files/:id`
+- `DELETE /api/files/:id`
+- `POST /api/files/:id/restore`
+- `DELETE /api/files/:id/permanent`
+- `PATCH /api/files/:id/favorite`
+- `GET /api/teams`
+- `POST /api/teams`
+- `GET /api/teams/:id/members`
+- `POST /api/teams/:id/members`
+- `PATCH /api/teams/:id/members/:userId`
+- `DELETE /api/teams/:id/members/:userId`
+- `GET /api/health`
 
 ## Notes
 
 - Auth cookie name defaults to `excplus-auth`.
 - Frontend should call `/auth/me` on startup with `credentials: include`.
+- E2E checklist base URL defaults to `http://localhost:3005/api`.

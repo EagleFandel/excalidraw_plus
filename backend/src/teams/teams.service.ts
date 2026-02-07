@@ -1,22 +1,16 @@
-import { prisma } from "../prisma.js";
+import { Injectable } from "@nestjs/common";
 
 import type { TeamRole } from "@prisma/client";
+
+import {
+  ForbiddenError,
+  TeamNotFoundError,
+} from "../common/exceptions/domain-errors";
+import { PrismaService } from "../prisma/prisma.service";
 
 export type AuthContext = {
   userId: string;
 };
-
-class TeamNotFoundError extends Error {
-  constructor() {
-    super("TEAM_NOT_FOUND");
-  }
-}
-
-class TeamForbiddenError extends Error {
-  constructor() {
-    super("TEAM_FORBIDDEN");
-  }
-}
 
 const mapTeam = (team: {
   id: string;
@@ -56,9 +50,12 @@ const mapTeamMember = (member: {
   },
 });
 
+@Injectable()
 export class TeamsService {
+  constructor(private readonly prisma: PrismaService) {}
+
   async listTeams(ctx: AuthContext) {
-    const members = await prisma.teamMember.findMany({
+    const members = await this.prisma.teamMember.findMany({
       where: {
         userId: ctx.userId,
       },
@@ -79,7 +76,7 @@ export class TeamsService {
   }
 
   async createTeam(ctx: AuthContext, input: { name: string }) {
-    const team = await prisma.team.create({
+    const team = await this.prisma.team.create({
       data: {
         name: input.name,
         createdByUserId: ctx.userId,
@@ -101,7 +98,7 @@ export class TeamsService {
   async listMembers(ctx: AuthContext, teamId: string) {
     await this.assertTeamMembership(ctx.userId, teamId);
 
-    const members = await prisma.teamMember.findMany({
+    const members = await this.prisma.teamMember.findMany({
       where: {
         teamId,
       },
@@ -130,19 +127,19 @@ export class TeamsService {
   ) {
     const actorRole = await this.assertTeamAdmin(ctx.userId, teamId);
     if (!actorRole) {
-      throw new TeamForbiddenError();
+      throw new ForbiddenError("Only owner/admin can manage members");
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: {
         email: input.email,
       },
     });
     if (!user) {
-      throw new TeamNotFoundError();
+      throw new TeamNotFoundError("Team or user not found");
     }
 
-    const member = await prisma.teamMember.upsert({
+    const member = await this.prisma.teamMember.upsert({
       where: {
         teamId_userId: {
           teamId,
@@ -179,10 +176,10 @@ export class TeamsService {
   ) {
     const actorRole = await this.assertTeamAdmin(ctx.userId, teamId);
     if (!actorRole) {
-      throw new TeamForbiddenError();
+      throw new ForbiddenError("Role change is not allowed");
     }
 
-    const existing = await prisma.teamMember.findUnique({
+    const existing = await this.prisma.teamMember.findUnique({
       where: {
         teamId_userId: {
           teamId,
@@ -192,11 +189,11 @@ export class TeamsService {
     });
 
     if (!existing) {
-      throw new TeamNotFoundError();
+      throw new TeamNotFoundError("Team or member not found");
     }
 
     if (existing.role === "owner" && role !== "owner") {
-      const ownerCount = await prisma.teamMember.count({
+      const ownerCount = await this.prisma.teamMember.count({
         where: {
           teamId,
           role: "owner",
@@ -204,11 +201,11 @@ export class TeamsService {
       });
 
       if (ownerCount <= 1) {
-        throw new TeamForbiddenError();
+        throw new ForbiddenError("Role change is not allowed");
       }
     }
 
-    const member = await prisma.teamMember.update({
+    const member = await this.prisma.teamMember.update({
       where: {
         teamId_userId: {
           teamId,
@@ -235,10 +232,10 @@ export class TeamsService {
   async removeMember(ctx: AuthContext, teamId: string, userId: string) {
     const actorRole = await this.assertTeamAdmin(ctx.userId, teamId);
     if (!actorRole) {
-      throw new TeamForbiddenError();
+      throw new ForbiddenError("Member removal is not allowed");
     }
 
-    const existing = await prisma.teamMember.findUnique({
+    const existing = await this.prisma.teamMember.findUnique({
       where: {
         teamId_userId: {
           teamId,
@@ -248,11 +245,11 @@ export class TeamsService {
     });
 
     if (!existing) {
-      throw new TeamNotFoundError();
+      throw new TeamNotFoundError("Team or member not found");
     }
 
     if (existing.role === "owner") {
-      const ownerCount = await prisma.teamMember.count({
+      const ownerCount = await this.prisma.teamMember.count({
         where: {
           teamId,
           role: "owner",
@@ -260,11 +257,11 @@ export class TeamsService {
       });
 
       if (ownerCount <= 1) {
-        throw new TeamForbiddenError();
+        throw new ForbiddenError("Member removal is not allowed");
       }
     }
 
-    await prisma.teamMember.delete({
+    await this.prisma.teamMember.delete({
       where: {
         teamId_userId: {
           teamId,
@@ -275,7 +272,7 @@ export class TeamsService {
   }
 
   async getTeamRole(userId: string, teamId: string) {
-    const member = await prisma.teamMember.findUnique({
+    const member = await this.prisma.teamMember.findUnique({
       where: {
         teamId_userId: {
           teamId,
@@ -288,17 +285,17 @@ export class TeamsService {
   }
 
   private async assertTeamMembership(userId: string, teamId: string) {
-    const team = await prisma.team.findUnique({
+    const team = await this.prisma.team.findUnique({
       where: {
         id: teamId,
       },
     });
 
     if (!team) {
-      throw new TeamNotFoundError();
+      throw new TeamNotFoundError("Team not found");
     }
 
-    const member = await prisma.teamMember.findUnique({
+    const member = await this.prisma.teamMember.findUnique({
       where: {
         teamId_userId: {
           teamId,
@@ -308,7 +305,7 @@ export class TeamsService {
     });
 
     if (!member) {
-      throw new TeamForbiddenError();
+      throw new ForbiddenError("No access to this team");
     }
 
     return member.role;
@@ -324,5 +321,3 @@ export class TeamsService {
     return role;
   }
 }
-
-export { TeamForbiddenError, TeamNotFoundError };

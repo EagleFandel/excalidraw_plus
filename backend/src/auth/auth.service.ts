@@ -1,10 +1,16 @@
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
+import { Inject, Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
-import type { UsersService } from "../users/users.service.js";
+import {
+  EmailAlreadyExistsError,
+  InvalidCredentialsError,
+} from "../common/exceptions/domain-errors";
+import { UsersService } from "../users/users.service";
 
-import type { StringValue } from "ms";
 import type { Response } from "express";
+import type { StringValue } from "ms";
 
 type AuthUser = {
   id: string;
@@ -17,13 +23,12 @@ type JwtPayload = {
   email: string;
 };
 
-const JWT_SECRET = process.env.JWT_SECRET || "change-me";
-const JWT_EXPIRES_IN =
-  (process.env.JWT_EXPIRES_IN as StringValue | number | undefined) || "7d";
-const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME || "excplus-auth";
-
+@Injectable()
 export class AuthService {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+  ) {}
 
   async register(input: {
     email: string;
@@ -32,7 +37,7 @@ export class AuthService {
   }): Promise<AuthUser> {
     const existing = await this.usersService.findByEmail(input.email);
     if (existing) {
-      throw new Error("EMAIL_ALREADY_EXISTS");
+      throw new EmailAlreadyExistsError();
     }
 
     const passwordHash = await argon2.hash(input.password);
@@ -48,12 +53,12 @@ export class AuthService {
   async login(input: { email: string; password: string }): Promise<AuthUser> {
     const user = await this.usersService.findByEmail(input.email);
     if (!user) {
-      throw new Error("INVALID_CREDENTIALS");
+      throw new InvalidCredentialsError();
     }
 
     const isValid = await argon2.verify(user.passwordHash, input.password);
     if (!isValid) {
-      throw new Error("INVALID_CREDENTIALS");
+      throw new InvalidCredentialsError();
     }
 
     return this.toAuthUser(user);
@@ -65,25 +70,47 @@ export class AuthService {
   }
 
   setAuthCookie(response: Response, user: AuthUser) {
-    const token = jwt.sign({ sub: user.id, email: user.email }, JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN,
+    const jwtSecret = this.configService.get<string>("JWT_SECRET") || "change-me";
+    const jwtExpiresIn =
+      (this.configService.get<string>("JWT_EXPIRES_IN") as
+        | StringValue
+        | number
+        | undefined) || "7d";
+    const authCookieName =
+      this.configService.get<string>("AUTH_COOKIE_NAME") || "excplus-auth";
+    const authCookieSecure =
+      this.configService.get<boolean>("AUTH_COOKIE_SECURE") || false;
+    const authCookieSameSite =
+      (this.configService.get<string>("AUTH_COOKIE_SAME_SITE") as
+        | "lax"
+        | "strict"
+        | "none"
+        | undefined) || "lax";
+    const authCookieDomain =
+      this.configService.get<string>("AUTH_COOKIE_DOMAIN") || undefined;
+
+    const token = jwt.sign({ sub: user.id, email: user.email }, jwtSecret, {
+      expiresIn: jwtExpiresIn,
     });
 
-    response.cookie(AUTH_COOKIE_NAME, token, {
+    response.cookie(authCookieName, token, {
       httpOnly: true,
-      secure: (process.env.AUTH_COOKIE_SECURE || "false") === "true",
-      sameSite:
-        (process.env.AUTH_COOKIE_SAME_SITE as "lax" | "strict" | "none") ||
-        "lax",
-      domain: process.env.AUTH_COOKIE_DOMAIN || undefined,
+      secure: authCookieSecure,
+      sameSite: authCookieSameSite,
+      domain: authCookieDomain,
       path: "/",
     });
   }
 
   clearAuthCookie(response: Response) {
-    response.clearCookie(AUTH_COOKIE_NAME, {
+    const authCookieName =
+      this.configService.get<string>("AUTH_COOKIE_NAME") || "excplus-auth";
+    const authCookieDomain =
+      this.configService.get<string>("AUTH_COOKIE_DOMAIN") || undefined;
+
+    response.clearCookie(authCookieName, {
       path: "/",
-      domain: process.env.AUTH_COOKIE_DOMAIN || undefined,
+      domain: authCookieDomain,
     });
   }
 
@@ -92,8 +119,10 @@ export class AuthService {
       return null;
     }
 
+    const jwtSecret = this.configService.get<string>("JWT_SECRET") || "change-me";
+
     try {
-      const decoded = jwt.verify(cookieValue, JWT_SECRET) as JwtPayload;
+      const decoded = jwt.verify(cookieValue, jwtSecret) as JwtPayload;
       if (!decoded?.sub || !decoded?.email) {
         return null;
       }
@@ -104,7 +133,7 @@ export class AuthService {
   }
 
   getAuthCookieName() {
-    return AUTH_COOKIE_NAME;
+    return this.configService.get<string>("AUTH_COOKIE_NAME") || "excplus-auth";
   }
 
   private toAuthUser(user: {
