@@ -1,7 +1,14 @@
 #!/bin/sh
 set -eu
 
-echo "[entrypoint] rendering nginx config with PORT=${PORT:-80}, API_UPSTREAM=${API_UPSTREAM:-http://127.0.0.1:3005}"
+PORT="${PORT:-80}"
+API_UPSTREAM="${API_UPSTREAM:-http://127.0.0.1:3005}"
+BACKEND_HOST="${BACKEND_HOST:-127.0.0.1}"
+BACKEND_PORT="${BACKEND_PORT:-3005}"
+
+export PORT API_UPSTREAM BACKEND_HOST BACKEND_PORT
+
+echo "[entrypoint] rendering nginx config with PORT=${PORT}, API_UPSTREAM=${API_UPSTREAM}"
 
 if [ -f /etc/nginx/templates/default.conf.template ]; then
   if command -v envsubst >/dev/null 2>&1; then
@@ -14,7 +21,7 @@ if [ -f /etc/nginx/templates/default.conf.template ]; then
   fi
 fi
 
-echo "[entrypoint] starting backend on ${BACKEND_HOST:-127.0.0.1}:${BACKEND_PORT:-3005}"
+echo "[entrypoint] starting backend on ${BACKEND_HOST}:${BACKEND_PORT}"
 
 echo "[entrypoint] applying prisma migrations"
 
@@ -30,7 +37,7 @@ fi
 node /opt/node_app/backend/dist/main.js &
 BACKEND_PID=$!
 
-echo "[entrypoint] starting nginx on ${PORT:-80}"
+echo "[entrypoint] starting nginx on ${PORT}"
 
 nginx -g 'daemon off;' &
 NGINX_PID=$!
