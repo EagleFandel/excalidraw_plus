@@ -17,6 +17,74 @@ type RequestLike = {
   url?: string;
 };
 
+const getMessageFromHttpExceptionBody = (
+  body: unknown,
+  fallback: string,
+): string => {
+  if (typeof body === "string" && body.trim()) {
+    return body;
+  }
+
+  if (typeof body === "object" && body) {
+    const message = (body as { message?: string | string[] }).message;
+    if (Array.isArray(message)) {
+      return message.join(", ");
+    }
+    if (typeof message === "string" && message.trim()) {
+      return message;
+    }
+
+    const nestedMessage = (
+      body as { error?: { message?: string } }
+    ).error?.message;
+    if (typeof nestedMessage === "string" && nestedMessage.trim()) {
+      return nestedMessage;
+    }
+  }
+
+  return fallback;
+};
+
+const getCodeFromHttpExceptionBody = (body: unknown): string | null => {
+  if (!body || typeof body !== "object") {
+    return null;
+  }
+
+  const directCode = (body as { code?: string }).code;
+  if (typeof directCode === "string" && directCode.trim()) {
+    return directCode;
+  }
+
+  const nestedCode = (body as { error?: { code?: string } }).error?.code;
+  if (typeof nestedCode === "string" && nestedCode.trim()) {
+    return nestedCode;
+  }
+
+  return null;
+};
+
+const mapStatusToErrorCode = (status: number): string => {
+  switch (status) {
+    case HttpStatus.BAD_REQUEST:
+    case HttpStatus.UNPROCESSABLE_ENTITY:
+      return "INVALID_INPUT";
+    case HttpStatus.UNAUTHORIZED:
+      return "UNAUTHORIZED";
+    case HttpStatus.FORBIDDEN:
+      return "FORBIDDEN";
+    case HttpStatus.NOT_FOUND:
+      return "NOT_FOUND";
+    case HttpStatus.CONFLICT:
+      return "CONFLICT";
+    case HttpStatus.TOO_MANY_REQUESTS:
+      return "RATE_LIMITED";
+    default:
+      return status >= HttpStatus.INTERNAL_SERVER_ERROR
+        ? "INTERNAL_ERROR"
+        : "REQUEST_FAILED";
+  }
+};
+
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
@@ -80,11 +148,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         response.status(HttpStatus.BAD_REQUEST).json({
           error: {
             code: "INVALID_INPUT",
-            message:
-              typeof body === "string"
-                ? body
-                : (body as { message?: string | string[] })?.message?.toString() ||
-                  "Invalid input",
+            message: getMessageFromHttpExceptionBody(body, "Invalid input"),
           },
         });
         return;
@@ -100,23 +164,28 @@ export class HttpExceptionFilter implements ExceptionFilter {
         return;
       }
 
+      const errorCode =
+        getCodeFromHttpExceptionBody(body) || mapStatusToErrorCode(status);
+      const message = getMessageFromHttpExceptionBody(
+        body,
+        exception.message ||
+          (status >= HttpStatus.INTERNAL_SERVER_ERROR
+            ? "Internal server error"
+            : "Request failed"),
+      );
+
       response.status(status).json({
         error: {
-          code: "INTERNAL_ERROR",
-          message:
-            (typeof body === "string"
-              ? body
-              : (body as { message?: string | string[] })?.message?.toString()) ||
-            exception.message ||
-            "Internal server error",
+          code: errorCode,
+          message,
         },
       });
 
       if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
         logError(
           status,
-          "INTERNAL_ERROR",
-          exception.message || "Internal server error",
+          errorCode,
+          message,
           exception.stack,
         );
       }

@@ -1,6 +1,7 @@
 import {
   CallHandler,
   ExecutionContext,
+  HttpException,
   Injectable,
   Logger,
   NestInterceptor,
@@ -56,12 +57,23 @@ export class RequestLogInterceptor implements NestInterceptor {
         },
         error: (error) => {
           const latencyMs = Date.now() - startedAt;
+          const fallbackStatus =
+            error instanceof HttpException
+              ? error.getStatus()
+              : typeof (error as { status?: unknown })?.status === "number"
+              ? Number((error as { status: number }).status)
+              : 500;
+          const statusCode =
+            typeof response.statusCode === "number" && response.statusCode >= 400
+              ? response.statusCode
+              : fallbackStatus;
+
           this.logger.error(
             JSON.stringify({
               requestId,
               method: request.method,
               path: request.originalUrl || request.url,
-              status: response.statusCode,
+              status: statusCode,
               latencyMs,
               error:
                 error instanceof Error ? error.message : String(error || "unknown"),
@@ -72,4 +84,3 @@ export class RequestLogInterceptor implements NestInterceptor {
     );
   }
 }
-

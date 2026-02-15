@@ -276,7 +276,12 @@ const getTeamsPanelErrorMessage = (error: unknown, fallback: string) => {
   if (message.includes("unauthorized") || message.includes("sign in")) {
     return t("excPlus.errors.unauthorized");
   }
-  if (message.includes("forbidden") || message.includes("permission")) {
+  if (
+    message.includes("forbidden") ||
+    message.includes("permission") ||
+    message.includes("not allowed") ||
+    message.includes("no access")
+  ) {
     return t("excPlus.errors.forbidden");
   }
   if (message.includes("not found")) {
@@ -614,8 +619,14 @@ const ExcalidrawWrapper = () => {
             })
           : await filesApi.listPersonalFiles({ includeTrashed: true });
 
-      const files = scopeFiles.filter((item) => !item.trashedAt);
-      const trash = scopeFiles.filter((item) => !!item.trashedAt);
+      // Prefer the explicit isTrashed flag to avoid surfacing legacy
+      // records whose trashedAt is missing but file is already trashed.
+      const files = scopeFiles.filter(
+        (item) => !(item.isTrashed ?? Boolean(item.trashedAt)),
+      );
+      const trash = scopeFiles.filter(
+        (item) => item.isTrashed ?? Boolean(item.trashedAt),
+      );
 
       setFilesList(files);
       setTrashedFiles(trash);

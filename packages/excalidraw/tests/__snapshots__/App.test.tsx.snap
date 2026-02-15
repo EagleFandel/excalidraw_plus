@@ -34,7 +34,7 @@ exports[`Test <App/> > should show error modal when using brave and measureText 
   <p>
     If disabling this setting doesn't fix the display of text elements, please open an 
     <a
-      href="https://github.com/excalidraw/excalidraw/issues/new"
+      href="https://github.com/EagleFandel/excalidraw_plus/issues/new"
     >
       issue
     </a>

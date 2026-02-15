@@ -134,9 +134,15 @@ export class TeamsService {
       throw new ForbiddenError("Only owner/admin can manage members");
     }
 
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: {
-        email: input.email,
+        email: {
+          equals: input.email,
+          mode: "insensitive",
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
     if (!user) {

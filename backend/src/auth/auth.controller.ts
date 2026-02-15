@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ExecutionContext,
   Get,
   HttpCode,
   HttpStatus,
@@ -13,6 +14,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { ConfigService } from "@nestjs/config";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
@@ -24,8 +26,26 @@ type RequestWithCookies = Request & {
   cookies?: Record<string, string | undefined>;
 };
 
-const AUTH_THROTTLE_LIMIT = Number(process.env.AUTH_THROTTLE_LIMIT || 10);
-const AUTH_THROTTLE_TTL = Number(process.env.AUTH_THROTTLE_TTL || 60) * 1000;
+const getConfigServiceFromContext = (
+  context: ExecutionContext,
+): ConfigService | null => {
+  const request = context.switchToHttp().getRequest<RequestWithCookies & {
+    app?: { get?: (token: unknown) => unknown };
+  }>();
+
+  const resolved = request.app?.get?.(ConfigService);
+  return resolved instanceof ConfigService ? resolved : null;
+};
+
+const resolveAuthThrottleLimit = (context: ExecutionContext): number => {
+  const configService = getConfigServiceFromContext(context);
+  return Number(configService?.get<number>("AUTH_THROTTLE_LIMIT") || 10);
+};
+
+const resolveAuthThrottleTtl = (context: ExecutionContext): number => {
+  const configService = getConfigServiceFromContext(context);
+  return Number(configService?.get<number>("AUTH_THROTTLE_TTL") || 60) * 1000;
+};
 
 @ApiTags("auth")
 @Controller("auth")
@@ -44,8 +64,8 @@ export class AuthController {
   @Post("register")
   @Throttle({
     default: {
-      limit: AUTH_THROTTLE_LIMIT,
-      ttl: AUTH_THROTTLE_TTL,
+      limit: resolveAuthThrottleLimit,
+      ttl: resolveAuthThrottleTtl,
     },
   })
   @ApiOperation({ summary: "Register account" })
@@ -68,8 +88,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({
     default: {
-      limit: AUTH_THROTTLE_LIMIT,
-      ttl: AUTH_THROTTLE_TTL,
+      limit: resolveAuthThrottleLimit,
+      ttl: resolveAuthThrottleTtl,
     },
   })
   @ApiOperation({ summary: "Login with email and password" })
@@ -89,8 +109,8 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Throttle({
     default: {
-      limit: AUTH_THROTTLE_LIMIT,
-      ttl: AUTH_THROTTLE_TTL,
+      limit: resolveAuthThrottleLimit,
+      ttl: resolveAuthThrottleTtl,
     },
   })
   @ApiOperation({ summary: "Logout current user" })
@@ -109,8 +129,8 @@ export class AuthController {
   @Get("me")
   @Throttle({
     default: {
-      limit: AUTH_THROTTLE_LIMIT,
-      ttl: AUTH_THROTTLE_TTL,
+      limit: resolveAuthThrottleLimit,
+      ttl: resolveAuthThrottleTtl,
     },
   })
   @ApiOperation({ summary: "Get current authenticated user" })

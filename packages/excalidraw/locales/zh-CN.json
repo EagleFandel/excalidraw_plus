@@ -778,16 +778,16 @@
         "failed": "创建文件失败"
       },
       "errors": {
-        "loadFiles": "??????",
-        "openFile": "??????",
-        "createFile": "??????",
-        "deleteFile": "??????",
-        "restoreFile": "??????",
-        "permanentDeleteFile": "????????",
-        "favoriteFile": "??????",
-        "renameFile": "???????",
-        "overwriteConflict": "??????",
-        "saveConflictCopy": "??????"
+        "loadFiles": "加载文件失败",
+        "openFile": "打开文件失败",
+        "createFile": "创建文件失败",
+        "deleteFile": "删除文件失败",
+        "restoreFile": "恢复文件失败",
+        "permanentDeleteFile": "永久删除文件失败",
+        "favoriteFile": "更新收藏状态失败",
+        "renameFile": "重命名文件失败",
+        "overwriteConflict": "覆盖远端解决冲突失败",
+        "saveConflictCopy": "保存冲突副本失败"
       }
     },
     "teams": {
@@ -804,48 +804,48 @@
         "failed": "创建团队失败"
       },
       "roles": {
-        "owner": "???",
-        "admin": "???",
-        "member": "??"
+        "owner": "所有者",
+        "admin": "管理员",
+        "member": "成员"
       },
       "membersDialog": {
-        "title": "???? ? {{name}}",
-        "titleFallback": "????",
-        "regionAria": "??????",
-        "loading": "???...",
-        "refresh": "??",
-        "inviteEmail": "????",
+        "title": "成员管理 · {{name}}",
+        "titleFallback": "成员管理",
+        "regionAria": "团队成员管理",
+        "loading": "加载中...",
+        "refresh": "刷新",
+        "inviteEmail": "邀请邮箱",
         "inviteEmailPlaceholder": "member@example.com",
-        "role": "??",
-        "roleSelectAria": "????",
-        "inviting": "???...",
-        "addMember": "????",
-        "readOnlyHint": "???????????",
-        "you": "?",
-        "memberRoleAria": "{{email}} ???",
-        "removeAria": "?? {{email}}",
-        "removeConfirm": "??? {{email}} ??????",
-        "remove": "??",
-        "empty": "?????"
+        "role": "角色",
+        "roleSelectAria": "邀请角色",
+        "inviting": "邀请中...",
+        "addMember": "添加成员",
+        "readOnlyHint": "你只有成员权限，当前为只读。",
+        "you": "你",
+        "memberRoleAria": "{{email}} 的角色",
+        "removeAria": "移除 {{email}}",
+        "removeConfirm": "确认将 {{email}} 移出该团队？",
+        "remove": "移除",
+        "empty": "暂无成员"
       },
       "errors": {
-        "loadTeams": "??????",
-        "createTeam": "??????",
-        "loadMembers": "????????",
-        "addMember": "????????",
-        "updateMemberRole": "????????",
-        "removeMember": "????????"
+        "loadTeams": "加载团队失败",
+        "createTeam": "创建团队失败",
+        "loadMembers": "加载成员失败",
+        "addMember": "添加成员失败",
+        "updateMemberRole": "更新成员角色失败",
+        "removeMember": "移除成员失败"
       }
     },
     "ai": {
       "rateLimitHint": "请稍后再试。"
     },
     "errors": {
-      "forbidden": "???????",
-      "fileNotFound": "?????????",
-      "unauthorized": "?????",
-      "versionConflict": "???????",
-      "notFound": "?????"
+      "forbidden": "没有执行该操作的权限",
+      "fileNotFound": "文件不存在或已被删除",
+      "unauthorized": "登录已失效，请重新登录",
+      "versionConflict": "检测到版本冲突",
+      "notFound": "资源不存在"
     }
   },
   "keys": {
