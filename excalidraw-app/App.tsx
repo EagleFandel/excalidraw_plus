@@ -532,10 +532,20 @@ const ExcalidrawWrapper = () => {
   const pendingOpsTimerRef = useRef<number | null>(null);
   const filesListRef = useRef(filesList);
   const fileMetaMapRef = useRef<Record<string, (typeof filesList)[number]>>({});
+  const conflictContextRef = useRef(conflictContext);
+  const fileSyncStateRef = useRef(fileSyncState);
 
   useEffect(() => {
     filesListRef.current = filesList;
   }, [filesList]);
+
+  useEffect(() => {
+    conflictContextRef.current = conflictContext;
+  }, [conflictContext]);
+
+  useEffect(() => {
+    fileSyncStateRef.current = fileSyncState;
+  }, [fileSyncState]);
 
   useEffect(() => {
     fileMetaMapRef.current = filesList.reduce<Record<string, (typeof filesList)[number]>>(
@@ -835,6 +845,13 @@ const ExcalidrawWrapper = () => {
         source?: "local" | "queue";
         forceVersion?: number;
       }) => {
+        const activeConflict = conflictContextRef.current;
+        const isConflictLockedForFile = activeConflict?.fileId === opts.fileId;
+        if (isConflictLockedForFile) {
+          setFileSyncState("conflict");
+          return;
+        }
+
         const currentVersion = opts.forceVersion || saveVersionRef.current[opts.fileId];
         if (!currentVersion) {
           return;
@@ -971,6 +988,11 @@ const ExcalidrawWrapper = () => {
 
   const replayPendingOperations = useCallback(async () => {
     if (replayingPendingOpsRef.current || !pendingOps.length || !navigator.onLine) {
+      return;
+    }
+
+    if (conflictContextRef.current) {
+      setFileSyncState("conflict");
       return;
     }
 
@@ -1524,6 +1546,11 @@ const ExcalidrawWrapper = () => {
       return;
     }
 
+    if (conflictContext) {
+      setFileSyncState("conflict");
+      return;
+    }
+
     const nextRetryAt = pendingOps.reduce<number | null>((current, op) => {
       if (current === null) {
         return op.nextRetryAt;
@@ -1546,10 +1573,20 @@ const ExcalidrawWrapper = () => {
         pendingOpsTimerRef.current = null;
       }
     };
-  }, [isAuthenticated, pendingOps, replayPendingOperations]);
+  }, [
+    conflictContext,
+    isAuthenticated,
+    pendingOps,
+    replayPendingOperations,
+    setFileSyncState,
+  ]);
 
   useEffect(() => {
     const handleOnline = () => {
+      if (conflictContextRef.current) {
+        setFileSyncState("conflict");
+        return;
+      }
       replayPendingOperations();
     };
 
@@ -1571,6 +1608,11 @@ const ExcalidrawWrapper = () => {
       return;
     }
 
+    if (conflictContext) {
+      setFileSyncState("conflict");
+      return;
+    }
+
     if (!navigator.onLine) {
       setFileSyncState("offline");
       return;
@@ -1579,7 +1621,7 @@ const ExcalidrawWrapper = () => {
     if (pendingOps.length) {
       setFileSyncState("offline");
     }
-  }, [isAuthenticated, pendingOps.length, setFileSyncState]);
+  }, [conflictContext, isAuthenticated, pendingOps.length, setFileSyncState]);
 
   useEffect(() => {
     if (
@@ -1901,7 +1943,14 @@ const ExcalidrawWrapper = () => {
       !isApplyingPersonalSceneRef.current
     ) {
       const serializedScene = serializeSceneFromExcalidraw(excalidrawAPI);
-      setFileSyncState("dirty");
+      const activeConflict = conflictContextRef.current;
+      const isConflictLockedForFile = activeConflict?.fileId === activeFileId;
+
+      if (isConflictLockedForFile || fileSyncStateRef.current === "conflict") {
+        setFileSyncState("conflict");
+      } else {
+        setFileSyncState("dirty");
+      }
 
       MyFilesLocalStore.setLocalFile({
         fileId: activeFileId,
@@ -1913,10 +1962,12 @@ const ExcalidrawWrapper = () => {
         // ignore local caching errors
       });
 
-      saveCurrentFileDebounced({
-        fileId: activeFileId,
-        scene: serializedScene,
-      });
+      if (!(isConflictLockedForFile || fileSyncStateRef.current === "conflict")) {
+        saveCurrentFileDebounced({
+          fileId: activeFileId,
+          scene: serializedScene,
+        });
+      }
     }
 
     // Render the debug scene if the debug canvas is available
@@ -2301,8 +2352,7 @@ const ExcalidrawWrapper = () => {
         <ConflictDialog
           context={conflictContext}
           onClose={() => {
-            setConflictContext(null);
-            setFileSyncState("dirty");
+            setFileSyncState("conflict");
           }}
           onOverwrite={async () => {
             if (!conflictContext || !excalidrawAPI) {

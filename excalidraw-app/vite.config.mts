@@ -179,7 +179,8 @@ export default defineConfig(({ mode }) => {
             },
             {
               urlPattern: new RegExp("locales/[^/]+.js"),
-              handler: "CacheFirst",
+              // avoid long-lived stale locale bundles after deployment
+              handler: "StaleWhileRevalidate",
               options: {
                 cacheName: "locales",
                 expiration: {
