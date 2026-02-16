@@ -9,6 +9,18 @@ export const createIV = (): Uint8Array<ArrayBuffer> => {
   return window.crypto.getRandomValues(arr);
 };
 
+const normalizeToCryptoArrayBuffer = (
+  data: Uint8Array | ArrayBuffer,
+): ArrayBuffer => {
+  if (data instanceof Uint8Array) {
+    const copy = new Uint8Array(data.byteLength);
+    copy.set(data);
+    return copy.buffer;
+  }
+
+  return data;
+};
+
 export const generateEncryptionKey = async <
   T extends "string" | "cryptoKey" = "string",
 >(
@@ -54,11 +66,11 @@ export const encryptData = async (
   const importedKey =
     typeof key === "string" ? await getCryptoKey(key, "encrypt") : key;
   const iv = createIV();
-  const buffer: ArrayBuffer | Uint8Array =
+  const buffer: ArrayBuffer =
     typeof data === "string"
-      ? new TextEncoder().encode(data)
+      ? normalizeToCryptoArrayBuffer(new TextEncoder().encode(data))
       : data instanceof Uint8Array
-      ? data
+      ? normalizeToCryptoArrayBuffer(data)
       : data instanceof Blob
       ? await blobToArrayBuffer(data)
       : data;
@@ -68,7 +80,7 @@ export const encryptData = async (
   const encryptedBuffer = await window.crypto.subtle.encrypt(
     {
       name: "AES-GCM",
-      iv,
+      iv: normalizeToCryptoArrayBuffer(iv),
     },
     importedKey,
     buffer,
@@ -78,7 +90,7 @@ export const encryptData = async (
 };
 
 export const decryptData = async (
-  iv: Uint8Array,
+  iv: Uint8Array | ArrayBuffer,
   encrypted: Uint8Array | ArrayBuffer,
   privateKey: string,
 ): Promise<ArrayBuffer> => {
@@ -86,9 +98,9 @@ export const decryptData = async (
   return window.crypto.subtle.decrypt(
     {
       name: "AES-GCM",
-      iv,
+      iv: normalizeToCryptoArrayBuffer(iv),
     },
     key,
-    encrypted,
+    normalizeToCryptoArrayBuffer(encrypted),
   );
 };
