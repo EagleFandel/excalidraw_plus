@@ -32,16 +32,24 @@ export const UserMenu = ({
     >
       <div className="UserMenuDialog">
         <div className="UserMenuDialog__info">
-          <div className="UserMenuDialog__name">{user.displayName || user.email}</div>
+          <div className="UserMenuDialog__name">
+            {user.displayName || user.email}
+          </div>
           <div className="UserMenuDialog__email">{user.email}</div>
         </div>
 
-        {!!errorMessage && <div className="UserMenuDialog__error">{errorMessage}</div>}
+        {!!errorMessage && (
+          <div className="UserMenuDialog__error">{errorMessage}</div>
+        )}
 
         <FilledButton
           size="large"
           fullWidth
-          label={isSubmitting ? t("excPlus.auth.signingOut") : t("excPlus.auth.signOut")}
+          label={
+            isSubmitting
+              ? t("excPlus.auth.signingOut")
+              : t("excPlus.auth.signOut")
+          }
           onClick={async () => {
             setIsSubmitting(true);
             setErrorMessage("");
@@ -59,4 +67,3 @@ export const UserMenu = ({
     </Dialog>
   );
 };
-

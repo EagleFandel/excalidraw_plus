@@ -12,6 +12,7 @@ const RUN_STARTED_AT = new Date();
 const CSRF_HEADER_NAME =
   (process.env.CSRF_HEADER_NAME || "x-csrf-token").toLowerCase();
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+const AI_ENABLED = String(process.env.AI_ENABLED || "").toLowerCase() === "true";
 let lastProcInfo = null;
 const prisma = new PrismaClient();
 const DEFAULT_DATABASE_URL =
@@ -281,6 +282,21 @@ const startBackendProcess = async () => {
     AUTH_THROTTLE_TTL: process.env.AUTH_THROTTLE_TTL || "60",
     AUTH_THROTTLE_LIMIT: process.env.AUTH_THROTTLE_LIMIT || "10",
     METRICS_ENABLED: process.env.METRICS_ENABLED || "false",
+    COLLAB_MAX_SCENE_BYTES: process.env.COLLAB_MAX_SCENE_BYTES || "2097152",
+    COLLAB_MAX_FILE_BYTES: process.env.COLLAB_MAX_FILE_BYTES || "4194304",
+    AI_ENABLED: process.env.AI_ENABLED || "false",
+    AI_PROVIDER: process.env.AI_PROVIDER || "openai-compatible",
+    AI_BASE_URL: process.env.AI_BASE_URL || "https://api.openai.com/v1",
+    AI_API_KEY: process.env.AI_API_KEY || "",
+    AI_TEXT_TO_DIAGRAM_MODEL:
+      process.env.AI_TEXT_TO_DIAGRAM_MODEL || "gpt-4.1-mini",
+    AI_DIAGRAM_TO_CODE_MODEL:
+      process.env.AI_DIAGRAM_TO_CODE_MODEL || "gpt-4.1-mini",
+    AI_TIMEOUT_MS: process.env.AI_TIMEOUT_MS || "45000",
+    AI_THROTTLE_TTL: process.env.AI_THROTTLE_TTL || "60",
+    AI_THROTTLE_LIMIT_PER_IP: process.env.AI_THROTTLE_LIMIT_PER_IP || "30",
+    AI_THROTTLE_LIMIT_PER_USER:
+      process.env.AI_THROTTLE_LIMIT_PER_USER || "20",
   };
 
   await runCommand("yarn", ["prisma:deploy"], {
@@ -366,6 +382,8 @@ const main = async () => {
     teamFileId: "",
     personalVersion: 1,
     teamVersion: 1,
+    collabRoomId: `room_${RUN_ID}`,
+    collabFileId: `file_${RUN_ID}`,
   };
 
   let procInfo = null;
@@ -414,6 +432,62 @@ const main = async () => {
       },
     });
     assert(safeCode(res.data) === "FORBIDDEN", "missing CSRF should return FORBIDDEN");
+  }, state);
+
+  await runStep("Collab scene write/read without auth and CSRF", async () => {
+    const scenePayload = {
+      sceneVersion: 1,
+      iv: Buffer.from("iv-seed").toString("base64"),
+      ciphertext: Buffer.from(`ciphertext-${RUN_ID}`).toString("base64"),
+    };
+
+    const putRes = await anon.request(
+      "PUT",
+      `/collab/rooms/${refs.collabRoomId}/scene`,
+      {
+        expectedStatus: 200,
+        useCsrf: false,
+        body: scenePayload,
+      },
+    );
+    assert(putRes.data?.scene?.roomId === refs.collabRoomId, "scene roomId mismatch");
+    assert(
+      Number(putRes.data?.scene?.sceneVersion) === 1,
+      "scene version should be 1",
+    );
+
+    const getRes = await anon.request(
+      "GET",
+      `/collab/rooms/${refs.collabRoomId}/scene`,
+      {
+        expectedStatus: 200,
+      },
+    );
+    assert(getRes.data?.scene?.ciphertext, "scene ciphertext missing");
+  }, state);
+
+  await runStep("Collab asset write/read without auth and CSRF", async () => {
+    const blob = Buffer.from(`asset-${RUN_ID}`).toString("base64");
+
+    const putRes = await anon.request(
+      "PUT",
+      `/collab/rooms/${refs.collabRoomId}/files/${refs.collabFileId}`,
+      {
+        expectedStatus: 200,
+        useCsrf: false,
+        body: { blob },
+      },
+    );
+    assert(putRes.data?.file?.roomId === refs.collabRoomId, "asset roomId mismatch");
+
+    const getRes = await anon.request(
+      "GET",
+      `/collab/rooms/${refs.collabRoomId}/files/${refs.collabFileId}`,
+      {
+        expectedStatus: 200,
+      },
+    );
+    assert(getRes.data?.file?.blob === blob, "asset blob mismatch");
   }, state);
 
   await runStep("Register alice", async () => {
@@ -517,6 +591,62 @@ const main = async () => {
   await runStep("Alice /auth/me returns authenticated user", async () => {
     const res = await alice.request("GET", "/auth/me", { expectedStatus: 200 });
     assert(res.data?.user?.id === refs.aliceId, "alice /auth/me id mismatch");
+  }, state);
+
+  await runStep("AI diagram endpoint requires authentication", async () => {
+    const res = await anon.request("POST", "/ai/diagram-to-code/generate", {
+      expectedStatus: 401,
+      body: {
+        texts: ["unauthorized"],
+        image: "data:image/png;base64,AA==",
+      },
+    });
+    assert(safeCode(res.data) === "UNAUTHORIZED", "AI should require auth");
+  }, state);
+
+  await runStep("AI endpoints honor enabled/disabled mode", async () => {
+    const expectedStatus = AI_ENABLED ? 200 : 503;
+
+    const diagram = await alice.request("POST", "/ai/diagram-to-code/generate", {
+      expectedStatus,
+      body: {
+        texts: ["architecture", "gateway", "worker"],
+        image: "data:image/png;base64,AA==",
+        theme: "light",
+      },
+    });
+
+    if (AI_ENABLED) {
+      assert(typeof diagram.data?.html === "string", "diagram html missing");
+      assert(diagram.data.html.length > 0, "diagram html empty");
+    } else {
+      assert(safeCode(diagram.data) === "AI_DISABLED", "AI disabled code mismatch");
+    }
+
+    const stream = await alice.request(
+      "POST",
+      "/ai/text-to-diagram/chat-streaming",
+      {
+        expectedStatus,
+        body: {
+          messages: [
+            {
+              role: "user",
+              content: "Create a simple microservice architecture diagram",
+            },
+          ],
+        },
+      },
+    );
+
+    if (AI_ENABLED) {
+      assert(
+        typeof stream.data === "string" && stream.data.includes('"type":"done"'),
+        "stream should include done chunk",
+      );
+    } else {
+      assert(safeCode(stream.data) === "AI_DISABLED", "AI disabled code mismatch");
+    }
   }, state);
 
   await runStep("Alice creates personal file", async () => {

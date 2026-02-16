@@ -6,11 +6,7 @@ export const ExcalidrawPlusPromoBanner = ({
   onAuthClick: () => void;
 }) => {
   return (
-    <button
-      type="button"
-      onClick={onAuthClick}
-      className="plus-banner"
-    >
+    <button type="button" onClick={onAuthClick} className="plus-banner">
       {t("excPlus.auth.account")}
     </button>
   );

@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 
-import { PrismaService } from "../prisma/prisma.service";
+import type { PrismaService } from "../prisma/prisma.service";
 
 @ApiTags("health")
 @Controller("health")
@@ -24,7 +24,10 @@ export class HealthController {
       await this.prisma.$queryRaw`SELECT 1`;
       return { ok: true, db: true };
     } catch {
-      throw new HttpException({ ok: false, db: false }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        { ok: false, db: false },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
     }
   }
 }

@@ -52,6 +52,15 @@ export const validateEnv = (raw: RawEnv) => {
     throw new Error("AUTH_COOKIE_SAME_SITE must be one of lax|strict|none");
   }
 
+  const aiProvider =
+    typeof raw.AI_PROVIDER === "string" && raw.AI_PROVIDER
+      ? raw.AI_PROVIDER
+      : "openai-compatible";
+
+  if (!["openai-compatible"].includes(aiProvider)) {
+    throw new Error("AI_PROVIDER must be one of openai-compatible");
+  }
+
   return {
     ...raw,
     PORT: parseNumber(raw.PORT, 3005),
@@ -89,5 +98,37 @@ export const validateEnv = (raw: RawEnv) => {
     AUTH_THROTTLE_TTL: parseNumber(raw.AUTH_THROTTLE_TTL, 60),
     AUTH_THROTTLE_LIMIT: parseNumber(raw.AUTH_THROTTLE_LIMIT, 10),
     METRICS_ENABLED: parseBoolean(raw.METRICS_ENABLED, false),
+    COLLAB_MAX_SCENE_BYTES: parseNumber(
+      raw.COLLAB_MAX_SCENE_BYTES,
+      2 * 1024 * 1024,
+    ),
+    COLLAB_MAX_FILE_BYTES: parseNumber(
+      raw.COLLAB_MAX_FILE_BYTES,
+      4 * 1024 * 1024,
+    ),
+    AI_ENABLED: parseBoolean(raw.AI_ENABLED, false),
+    AI_PROVIDER: aiProvider,
+    AI_BASE_URL:
+      typeof raw.AI_BASE_URL === "string" && raw.AI_BASE_URL
+        ? raw.AI_BASE_URL
+        : "",
+    AI_API_KEY:
+      typeof raw.AI_API_KEY === "string" && raw.AI_API_KEY
+        ? raw.AI_API_KEY
+        : "",
+    AI_TEXT_TO_DIAGRAM_MODEL:
+      typeof raw.AI_TEXT_TO_DIAGRAM_MODEL === "string" &&
+      raw.AI_TEXT_TO_DIAGRAM_MODEL
+        ? raw.AI_TEXT_TO_DIAGRAM_MODEL
+        : "gpt-4.1-mini",
+    AI_DIAGRAM_TO_CODE_MODEL:
+      typeof raw.AI_DIAGRAM_TO_CODE_MODEL === "string" &&
+      raw.AI_DIAGRAM_TO_CODE_MODEL
+        ? raw.AI_DIAGRAM_TO_CODE_MODEL
+        : "gpt-4.1-mini",
+    AI_TIMEOUT_MS: parseNumber(raw.AI_TIMEOUT_MS, 45_000),
+    AI_THROTTLE_TTL: parseNumber(raw.AI_THROTTLE_TTL, 60),
+    AI_THROTTLE_LIMIT_PER_IP: parseNumber(raw.AI_THROTTLE_LIMIT_PER_IP, 30),
+    AI_THROTTLE_LIMIT_PER_USER: parseNumber(raw.AI_THROTTLE_LIMIT_PER_USER, 20),
   };
 };

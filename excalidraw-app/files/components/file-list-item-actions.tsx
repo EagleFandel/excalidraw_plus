@@ -16,16 +16,19 @@ export const FileListItemActions = ({
   const { t } = useI18n();
 
   return (
-    <div className="app-sidebar-file-actions" role="group" aria-label={t("excPlus.files.itemActions")}> 
+    <div
+      className="app-sidebar-file-actions"
+      role="group"
+      aria-label={t("excPlus.files.itemActions")}
+    >
       <button
         type="button"
         className="app-sidebar-file-action"
         aria-label={t("excPlus.files.renameAria", { title: item.title })}
         onClick={() => {
-          const nextTitle = window.prompt(
-            t("excPlus.files.renamePrompt"),
-            item.title,
-          )?.trim();
+          const nextTitle = window
+            .prompt(t("excPlus.files.renamePrompt"), item.title)
+            ?.trim();
 
           if (!nextTitle || nextTitle === item.title) {
             return;
@@ -46,7 +49,9 @@ export const FileListItemActions = ({
         }
         onClick={() => onToggleFavorite(item.id, !item.isFavorite)}
       >
-        {item.isFavorite ? t("excPlus.files.unfavorite") : t("excPlus.files.favorite")}
+        {item.isFavorite
+          ? t("excPlus.files.unfavorite")
+          : t("excPlus.files.favorite")}
       </button>
       <button
         type="button"
@@ -59,4 +64,3 @@ export const FileListItemActions = ({
     </div>
   );
 };
-

@@ -36,7 +36,9 @@ export const CreateTeamModal = ({
           placeholder={t("excPlus.teams.create.namePlaceholder")}
           fullWidth
         />
-        {!!errorMessage && <div className="CreateTeamModal__error">{errorMessage}</div>}
+        {!!errorMessage && (
+          <div className="CreateTeamModal__error">{errorMessage}</div>
+        )}
         <FilledButton
           size="large"
           fullWidth
@@ -68,4 +70,3 @@ export const CreateTeamModal = ({
     </Dialog>
   );
 };
-

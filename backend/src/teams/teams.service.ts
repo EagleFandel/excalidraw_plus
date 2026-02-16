@@ -1,13 +1,14 @@
 import { Injectable } from "@nestjs/common";
 
-import type { TeamRole } from "@prisma/client";
-
-import { AuditService } from "../audit/audit.service";
 import {
   ForbiddenError,
   TeamNotFoundError,
 } from "../common/exceptions/domain-errors";
-import { PrismaService } from "../prisma/prisma.service";
+
+import type { AuditService } from "../audit/audit.service";
+import type { PrismaService } from "../prisma/prisma.service";
+
+import type { TeamRole } from "@prisma/client";
 
 export type AuthContext = {
   userId: string;

@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
-import { MetricsService } from "./metrics.service";
+import type { MetricsService } from "./metrics.service";
 
 @Controller("metrics")
 export class MetricsController {
@@ -27,4 +27,3 @@ export class MetricsController {
     return this.metricsService.renderPrometheusText();
   }
 }
-

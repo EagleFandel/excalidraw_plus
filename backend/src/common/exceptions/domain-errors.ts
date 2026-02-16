@@ -57,3 +57,26 @@ export class VersionConflictError extends DomainError {
   }
 }
 
+export class PayloadTooLargeError extends DomainError {
+  constructor(message = "Payload exceeds maximum size") {
+    super("PAYLOAD_TOO_LARGE", 413, message);
+  }
+}
+
+export class CollabAssetNotFoundError extends DomainError {
+  constructor() {
+    super("COLLAB_ASSET_NOT_FOUND", 404, "Collaboration asset not found");
+  }
+}
+
+export class AiDisabledError extends DomainError {
+  constructor() {
+    super("AI_DISABLED", 503, "AI service is disabled");
+  }
+}
+
+export class TooManyRequestsError extends DomainError {
+  constructor(message = "Too many requests") {
+    super("RATE_LIMITED", 429, message);
+  }
+}

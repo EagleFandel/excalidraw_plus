@@ -10,7 +10,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-excalidraw} -d ${POSTGRES_DB:-excalidraw_plus_prod}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-excalidraw} -d ${POSTGRES_DB:-excalidraw_plus_prod}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -36,6 +40,7 @@ services:
       PORT: 3005
     command: >
       sh -c "yarn --cwd backend prisma:deploy && node backend/dist/main.js"
+
 
   web:
     build:

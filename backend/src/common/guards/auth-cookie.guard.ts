@@ -1,11 +1,10 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-} from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 
-import { AuthService } from "../../auth/auth.service";
 import { UnauthorizedError } from "../exceptions/domain-errors";
+
+import type { CanActivate, ExecutionContext } from "@nestjs/common";
+
+import type { AuthService } from "../../auth/auth.service";
 
 type RequestWithCookies = {
   cookies?: Record<string, string | undefined>;

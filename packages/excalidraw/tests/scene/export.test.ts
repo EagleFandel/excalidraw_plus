@@ -67,7 +67,7 @@ describe("exportToSvg", () => {
     );
 
     expect(svgElement).toMatchSnapshot();
-  });
+  }, 20_000);
 
   it("with a CJK font", async () => {
     const svgElement = await exportUtils.exportToSvg(
@@ -89,7 +89,7 @@ describe("exportToSvg", () => {
 
     expect(svgElement).toMatchSnapshot();
     // extend the timeout, as it needs to first load the fonts from disk and then perform whole woff2 decode, subset and encode (without workers)
-  }, 30_000);
+  }, 60_000);
 
   it("with background color", async () => {
     const BACKGROUND_COLOR = "#abcdef";

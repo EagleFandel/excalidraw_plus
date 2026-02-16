@@ -81,4 +81,3 @@ export const fetchWithCsrf = async (
     credentials: "include",
   });
 };
-

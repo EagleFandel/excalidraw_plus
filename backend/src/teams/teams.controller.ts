@@ -10,19 +10,17 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
-import {
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from "@nestjs/swagger";
+import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 
-import { AuthUser, AuthUserContext } from "../common/decorators/auth-user.decorator";
+import { AuthUser } from "../common/decorators/auth-user.decorator";
 import { AuthCookieGuard } from "../common/guards/auth-cookie.guard";
 
-import { AddMemberDto } from "./dto/add-member.dto";
-import { CreateTeamDto } from "./dto/create-team.dto";
-import { UpdateMemberDto } from "./dto/update-member.dto";
-import { TeamsService } from "./teams.service";
+import type { AuthUserContext } from "../common/decorators/auth-user.decorator";
+
+import type { AddMemberDto } from "./dto/add-member.dto";
+import type { CreateTeamDto } from "./dto/create-team.dto";
+import type { UpdateMemberDto } from "./dto/update-member.dto";
+import type { TeamsService } from "./teams.service";
 
 @ApiTags("teams")
 @Controller("teams")
@@ -34,7 +32,9 @@ export class TeamsController {
   @ApiOperation({ summary: "List teams for current user" })
   @ApiResponse({ status: 200, description: "Teams listed" })
   async listTeams(@AuthUser() authUser: AuthUserContext) {
-    const teams = await this.teamsService.listTeams({ userId: authUser.userId });
+    const teams = await this.teamsService.listTeams({
+      userId: authUser.userId,
+    });
     return { teams };
   }
 
@@ -116,6 +116,10 @@ export class TeamsController {
     @Param("id") teamId: string,
     @Param("userId") userId: string,
   ) {
-    await this.teamsService.removeMember({ userId: authUser.userId }, teamId, userId);
+    await this.teamsService.removeMember(
+      { userId: authUser.userId },
+      teamId,
+      userId,
+    );
   }
 }

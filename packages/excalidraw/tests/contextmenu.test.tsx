@@ -57,6 +57,8 @@ const { h } = window;
 
 describe("contextMenu element", () => {
   beforeEach(async () => {
+    unmountComponent();
+
     localStorage.clear();
     renderStaticScene.mockClear();
     reseed(7);
@@ -78,6 +80,8 @@ describe("contextMenu element", () => {
 
     mouse.reset();
     mouse.down(0, 0);
+
+    unmountComponent();
   });
 
   it("shows context menu for canvas", () => {

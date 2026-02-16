@@ -531,7 +531,7 @@ const ExcalidrawWrapper = () => {
   const replayingPendingOpsRef = useRef(false);
   const pendingOpsTimerRef = useRef<number | null>(null);
   const filesListRef = useRef(filesList);
-  const fileMetaMapRef = useRef<Record<string, (typeof filesList)[number]>>({});
+  const fileMetaMapRef = useRef<Record<string, typeof filesList[number]>>({});
   const conflictContextRef = useRef(conflictContext);
   const fileSyncStateRef = useRef(fileSyncState);
 
@@ -548,13 +548,12 @@ const ExcalidrawWrapper = () => {
   }, [fileSyncState]);
 
   useEffect(() => {
-    fileMetaMapRef.current = filesList.reduce<Record<string, (typeof filesList)[number]>>(
-      (acc, file) => {
-        acc[file.id] = file;
-        return acc;
-      },
-      {},
-    );
+    fileMetaMapRef.current = filesList.reduce<
+      Record<string, typeof filesList[number]>
+    >((acc, file) => {
+      acc[file.id] = file;
+      return acc;
+    }, {});
   }, [filesList]);
 
   const isApplyingPersonalSceneRef = useRef(false);
@@ -749,7 +748,10 @@ const ExcalidrawWrapper = () => {
 
         if (!local) {
           setFilesPanelError(
-            getFilesPanelErrorMessage(error, t("excPlus.files.errors.openFile")),
+            getFilesPanelErrorMessage(
+              error,
+              t("excPlus.files.errors.openFile"),
+            ),
           );
         }
       }
@@ -781,9 +783,10 @@ const ExcalidrawWrapper = () => {
       setFilesPanelError("");
       try {
         const scene = input?.scene || getEmptyFileScene();
-        const scope = input?.scope || (currentScope === "team" ? "team" : "personal");
+        const scope =
+          input?.scope || (currentScope === "team" ? "team" : "personal");
         const teamId =
-          scope === "team" ? (input?.teamId || currentTeamId || null) : null;
+          scope === "team" ? input?.teamId || currentTeamId || null : null;
 
         const created = await filesApi.createPersonalFile({
           title: input?.title,
@@ -816,7 +819,10 @@ const ExcalidrawWrapper = () => {
         await loadScopedFiles();
       } catch (error) {
         setFilesPanelError(
-          getFilesPanelErrorMessage(error, t("excPlus.files.errors.createFile")),
+          getFilesPanelErrorMessage(
+            error,
+            t("excPlus.files.errors.createFile"),
+          ),
         );
         throw new Error("CREATE_FILE_FAILED");
       }
@@ -852,7 +858,8 @@ const ExcalidrawWrapper = () => {
           return;
         }
 
-        const currentVersion = opts.forceVersion || saveVersionRef.current[opts.fileId];
+        const currentVersion =
+          opts.forceVersion || saveVersionRef.current[opts.fileId];
         if (!currentVersion) {
           return;
         }
@@ -920,7 +927,10 @@ const ExcalidrawWrapper = () => {
             return;
           }
 
-          if (error instanceof FilesApiError && error.code === "FILE_NOT_FOUND") {
+          if (
+            error instanceof FilesApiError &&
+            error.code === "FILE_NOT_FOUND"
+          ) {
             await MyFilesLocalStore.deleteLocalFile(opts.fileId);
             delete saveVersionRef.current[opts.fileId];
 
@@ -932,7 +942,9 @@ const ExcalidrawWrapper = () => {
             setConflictContext((prev) =>
               prev?.fileId === opts.fileId ? null : prev,
             );
-            setFilesList((prev) => prev.filter((file) => file.id !== opts.fileId));
+            setFilesList((prev) =>
+              prev.filter((file) => file.id !== opts.fileId),
+            );
             setFileMetaMap((prev) => {
               const next = { ...prev };
               delete next[opts.fileId];
@@ -987,7 +999,11 @@ const ExcalidrawWrapper = () => {
   ).current;
 
   const replayPendingOperations = useCallback(async () => {
-    if (replayingPendingOpsRef.current || !pendingOps.length || !navigator.onLine) {
+    if (
+      replayingPendingOpsRef.current ||
+      !pendingOps.length ||
+      !navigator.onLine
+    ) {
       return;
     }
 
@@ -1156,9 +1172,7 @@ const ExcalidrawWrapper = () => {
         setPendingOps((prev) =>
           prev.filter((op) => !(op.type === "save" && op.fileId === fileId)),
         );
-        setConflictContext((prev) =>
-          prev?.fileId === fileId ? null : prev,
-        );
+        setConflictContext((prev) => (prev?.fileId === fileId ? null : prev));
         setFileMetaMap((prev) => {
           const next = { ...prev };
           delete next[fileId];
@@ -1187,9 +1201,7 @@ const ExcalidrawWrapper = () => {
           setPendingOps((prev) =>
             prev.filter((op) => !(op.type === "save" && op.fileId === fileId)),
           );
-          setConflictContext((prev) =>
-            prev?.fileId === fileId ? null : prev,
-          );
+          setConflictContext((prev) => (prev?.fileId === fileId ? null : prev));
           setFileMetaMap((prev) => {
             const next = { ...prev };
             delete next[fileId];
@@ -1212,7 +1224,10 @@ const ExcalidrawWrapper = () => {
         }
 
         setFilesPanelError(
-          getFilesPanelErrorMessage(error, t("excPlus.files.errors.deleteFile")),
+          getFilesPanelErrorMessage(
+            error,
+            t("excPlus.files.errors.deleteFile"),
+          ),
         );
       }
     },
@@ -1240,7 +1255,10 @@ const ExcalidrawWrapper = () => {
         await loadScopedFiles();
       } catch (error) {
         setFilesPanelError(
-          getFilesPanelErrorMessage(error, t("excPlus.files.errors.restoreFile")),
+          getFilesPanelErrorMessage(
+            error,
+            t("excPlus.files.errors.restoreFile"),
+          ),
         );
       }
     },
@@ -1271,7 +1289,9 @@ const ExcalidrawWrapper = () => {
       try {
         const file = await filesApi.setFavorite(fileId, isFavorite);
         setFilesList((prev) =>
-          prev.map((item) => (item.id === file.id ? { ...item, ...file } : item)),
+          prev.map((item) =>
+            item.id === file.id ? { ...item, ...file } : item,
+          ),
         );
         setFileMetaMap((prev) => ({
           ...prev,
@@ -1282,7 +1302,10 @@ const ExcalidrawWrapper = () => {
         }));
       } catch (error) {
         setFilesPanelError(
-          getFilesPanelErrorMessage(error, t("excPlus.files.errors.favoriteFile")),
+          getFilesPanelErrorMessage(
+            error,
+            t("excPlus.files.errors.favoriteFile"),
+          ),
         );
       }
     },
@@ -1314,7 +1337,7 @@ const ExcalidrawWrapper = () => {
           fileId,
           version: saveVersionRef.current[fileId] || currentVersion,
           title: trimmedTitle,
-          scene: scene,
+          scene,
         });
 
         saveVersionRef.current[fileId] = saved.version;
@@ -1332,7 +1355,8 @@ const ExcalidrawWrapper = () => {
             .map((file) => (file.id === saved.id ? saved : file))
             .sort(
               (a, b) =>
-                new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+                new Date(b.updatedAt).getTime() -
+                new Date(a.updatedAt).getTime(),
             ),
         );
         setFileMetaMap((prev) => ({
@@ -1341,7 +1365,10 @@ const ExcalidrawWrapper = () => {
         }));
       } catch (error) {
         setFilesPanelError(
-          getFilesPanelErrorMessage(error, t("excPlus.files.errors.renameFile")),
+          getFilesPanelErrorMessage(
+            error,
+            t("excPlus.files.errors.renameFile"),
+          ),
         );
       }
     },
@@ -1364,7 +1391,10 @@ const ExcalidrawWrapper = () => {
         setIsCreateTeamModalOpen(false);
       } catch (error) {
         setTeamsPanelError(
-          getTeamsPanelErrorMessage(error, t("excPlus.teams.errors.createTeam")),
+          getTeamsPanelErrorMessage(
+            error,
+            t("excPlus.teams.errors.createTeam"),
+          ),
         );
         throw new Error("CREATE_TEAM_FAILED");
       }
@@ -1446,7 +1476,10 @@ const ExcalidrawWrapper = () => {
         await loadTeamMembers();
       } catch (error) {
         setTeamsPanelError(
-          getTeamsPanelErrorMessage(error, t("excPlus.teams.errors.updateMemberRole")),
+          getTeamsPanelErrorMessage(
+            error,
+            t("excPlus.teams.errors.updateMemberRole"),
+          ),
         );
       }
     },
@@ -1467,7 +1500,10 @@ const ExcalidrawWrapper = () => {
         await loadTeamMembers();
       } catch (error) {
         setTeamsPanelError(
-          getTeamsPanelErrorMessage(error, t("excPlus.teams.errors.removeMember")),
+          getTeamsPanelErrorMessage(
+            error,
+            t("excPlus.teams.errors.removeMember"),
+          ),
         );
       }
     },
@@ -1962,7 +1998,9 @@ const ExcalidrawWrapper = () => {
         // ignore local caching errors
       });
 
-      if (!(isConflictLockedForFile || fileSyncStateRef.current === "conflict")) {
+      if (
+        !(isConflictLockedForFile || fileSyncStateRef.current === "conflict")
+      ) {
         saveCurrentFileDebounced({
           fileId: activeFileId,
           scene: serializedScene,
@@ -2046,25 +2084,6 @@ const ExcalidrawWrapper = () => {
     [setShareDialogState],
   );
 
-  // browsers generally prevent infinite self-embedding, there are
-  // cases where it still happens, and while we disallow self-embedding
-  // by not whitelisting our own origin, this serves as an additional guard
-  if (isSelfEmbedding) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
-          height: "100%",
-        }}
-      >
-        <h1>I'm not a pretzel!</h1>
-      </div>
-    );
-  }
-
   const openAuthFlow = useCallback(
     (mode: AuthDialogMode) => {
       if (mode === "signin" && isAuthenticated) {
@@ -2103,7 +2122,9 @@ const ExcalidrawWrapper = () => {
       }
 
       if (fileListSort === "updated") {
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        return (
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
       }
 
       const aValue = new Date(a.lastOpenedAt || a.updatedAt).getTime();
@@ -2129,6 +2150,25 @@ const ExcalidrawWrapper = () => {
 
   const currentTeamName =
     teams.find((team) => team.id === currentTeamId)?.name || "Team";
+
+  // browsers generally prevent infinite self-embedding, there are
+  // cases where it still happens, and while we disallow self-embedding
+  // by not whitelisting our own origin, this serves as an additional guard
+  if (isSelfEmbedding) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          height: "100%",
+        }}
+      >
+        <h1>I'm not a pretzel!</h1>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -2167,7 +2207,9 @@ const ExcalidrawWrapper = () => {
             <div className="excalidraw-ui-top-right">
               {excalidrawAPI?.getEditorInterface().formFactor === "desktop" && (
                 <ExcalidrawPlusPromoBanner
-                  onAuthClick={() => openAuthFlow(isAuthenticated ? "signin" : "signup")}
+                  onAuthClick={() =>
+                    openAuthFlow(isAuthenticated ? "signin" : "signup")
+                  }
                 />
               )}
 
@@ -2213,7 +2255,12 @@ const ExcalidrawWrapper = () => {
           onChange={() => excalidrawAPI?.refresh()}
           isSignedIn={isAuthenticated}
         />
-        {excalidrawAPI && <AIComponents excalidrawAPI={excalidrawAPI} />}
+        {excalidrawAPI && (
+          <AIComponents
+            excalidrawAPI={excalidrawAPI}
+            onAuthRequired={() => openAuthFlow("signin")}
+          />
+        )}
 
         <TTDDialogTrigger />
         {isCollaborating && isOffline && (
@@ -2362,7 +2409,8 @@ const ExcalidrawWrapper = () => {
             try {
               const localScene = serializeSceneFromExcalidraw(excalidrawAPI);
               let attempts = 0;
-              let saved: Awaited<ReturnType<typeof filesApi.saveFile>> | null = null;
+              let saved: Awaited<ReturnType<typeof filesApi.saveFile>> | null =
+                null;
 
               while (!saved && attempts < 3) {
                 const latest = await filesApi.getFile(conflictContext.fileId);
@@ -2418,7 +2466,9 @@ const ExcalidrawWrapper = () => {
               setPendingOps((prev) =>
                 prev.filter(
                   (op) =>
-                    !(op.type === "save" && op.fileId === conflictContext.fileId),
+                    !(
+                      op.type === "save" && op.fileId === conflictContext.fileId
+                    ),
                 ),
               );
               setConflictContext(null);
@@ -2441,7 +2491,9 @@ const ExcalidrawWrapper = () => {
               const fileMeta = fileMetaMapRef.current[conflictContext.fileId];
               const localScene = serializeSceneFromExcalidraw(excalidrawAPI);
               await createFile({
-                title: `${fileMeta?.title || t("labels.untitled")} (${t("labels.copy")})`,
+                title: `${fileMeta?.title || t("labels.untitled")} (${t(
+                  "labels.copy",
+                )})`,
                 scope: fileMeta?.teamId ? "team" : "personal",
                 teamId: fileMeta?.teamId || null,
                 scene: localScene,

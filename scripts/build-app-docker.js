@@ -1,5 +1,3 @@
-"use strict";
-
 const { spawnSync } = require("node:child_process");
 
 const env = {

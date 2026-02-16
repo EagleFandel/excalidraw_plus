@@ -41,13 +41,19 @@ const bootstrap = async () => {
   });
 
   const metricsService = app.get(MetricsService);
-  expressApp.use((request: { method?: string; path?: string }, _response: unknown, next: () => void) => {
-    metricsService.incrementCounter("excplus_requests_total", {
-      method: request.method || "GET",
-      path: request.path || "",
-    });
-    next();
-  });
+  expressApp.use(
+    (
+      request: { method?: string; path?: string },
+      _response: unknown,
+      next: () => void,
+    ) => {
+      metricsService.incrementCounter("excplus_requests_total", {
+        method: request.method || "GET",
+        path: request.path || "",
+      });
+      next();
+    },
+  );
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle("Excalidraw+ API")
@@ -62,9 +68,12 @@ const bootstrap = async () => {
   SwaggerModule.setup("api/docs", app, openApiDocument, {
     jsonDocumentUrl: "/api/docs-json",
   });
-  expressApp.get("/api/docs-json", (_request: unknown, response: { json: (body: unknown) => void }) => {
-    response.json(openApiDocument);
-  });
+  expressApp.get(
+    "/api/docs-json",
+    (_request: unknown, response: { json: (body: unknown) => void }) => {
+      response.json(openApiDocument);
+    },
+  );
 
   const port = Number(process.env.BACKEND_PORT || process.env.PORT || 3005);
   const host = process.env.BACKEND_HOST || "0.0.0.0";
@@ -72,13 +81,17 @@ const bootstrap = async () => {
   await app.listen(port, host);
 
   process.stdout.write(
-    `[backend] listening on http://${host === "0.0.0.0" ? "localhost" : host}:${port}\n`,
+    `[backend] listening on http://${
+      host === "0.0.0.0" ? "localhost" : host
+    }:${port}\n`,
   );
 };
 
 bootstrap().catch((error) => {
   process.stderr.write(
-    `[backend] bootstrap failed: ${error instanceof Error ? error.message : String(error)}\n`,
+    `[backend] bootstrap failed: ${
+      error instanceof Error ? error.message : String(error)
+    }\n`,
   );
   process.exit(1);
 });

@@ -5,6 +5,8 @@ import { ThrottlerModule } from "@nestjs/throttler";
 
 import { AuditModule } from "./audit/audit.module";
 import { AuthModule } from "./auth/auth.module";
+import { AiModule } from "./ai/ai.module";
+import { CollabModule } from "./collab/collab.module";
 import { CsrfGuard } from "./common/guards/csrf.guard";
 import { ProxyThrottlerGuard } from "./common/guards/proxy-throttler.guard";
 import { HealthModule } from "./health/health.module";
@@ -40,6 +42,8 @@ import { MetricsService } from "./common/metrics/metrics.service";
     TeamsModule,
     FilesModule,
     HealthModule,
+    CollabModule,
+    AiModule,
   ],
   controllers: [MetricsController],
   providers: [

@@ -10,9 +10,7 @@ export class MetricsService {
   }
 
   renderPrometheusText() {
-    const lines = [
-      "# TYPE excplus_requests_total counter",
-    ];
+    const lines = ["# TYPE excplus_requests_total counter"];
 
     for (const [key, value] of this.counters.entries()) {
       lines.push(`${key} ${value}`);
@@ -34,4 +32,3 @@ export class MetricsService {
     return `${name}{${labelPairs}}`;
   }
 }
-

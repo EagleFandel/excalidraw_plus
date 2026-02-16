@@ -12,22 +12,19 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
-import {
-  ApiOperation,
-  ApiQuery,
-  ApiResponse,
-  ApiTags,
-} from "@nestjs/swagger";
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 
-import { AuthUser, AuthUserContext } from "../common/decorators/auth-user.decorator";
+import { AuthUser } from "../common/decorators/auth-user.decorator";
 import { InvalidInputError } from "../common/exceptions/domain-errors";
 import { AuthCookieGuard } from "../common/guards/auth-cookie.guard";
 
-import { CreateFileDto } from "./dto/create-file.dto";
-import { FavoriteDto } from "./dto/favorite.dto";
-import { ListFilesQuery } from "./dto/list-files.query";
-import { SaveFileDto } from "./dto/save-file.dto";
-import { FilesService } from "./files.service";
+import type { AuthUserContext } from "../common/decorators/auth-user.decorator";
+
+import type { CreateFileDto } from "./dto/create-file.dto";
+import type { FavoriteDto } from "./dto/favorite.dto";
+import type { ListFilesQuery } from "./dto/list-files.query";
+import type { SaveFileDto } from "./dto/save-file.dto";
+import type { FilesService } from "./files.service";
 
 @ApiTags("files")
 @Controller("files")
@@ -39,7 +36,11 @@ export class FilesController {
   @ApiOperation({ summary: "List files" })
   @ApiQuery({ name: "scope", required: false, enum: ["personal", "team"] })
   @ApiQuery({ name: "teamId", required: false, type: String })
-  @ApiQuery({ name: "includeTrashed", required: false, enum: ["true", "false"] })
+  @ApiQuery({
+    name: "includeTrashed",
+    required: false,
+    enum: ["true", "false"],
+  })
   @ApiQuery({ name: "favoritesOnly", required: false, enum: ["true", "false"] })
   @ApiResponse({ status: 200, description: "Files listed" })
   async listFiles(
@@ -75,7 +76,7 @@ export class FilesController {
       { userId: authUser.userId },
       {
         title: input.title,
-        teamId: input.scope === "team" ? (input.teamId || null) : null,
+        teamId: input.scope === "team" ? input.teamId || null : null,
         scene: input.scene
           ? {
               elements: input.scene.elements,
@@ -92,8 +93,14 @@ export class FilesController {
   @Get(":id")
   @ApiOperation({ summary: "Get file by id" })
   @ApiResponse({ status: 200, description: "File details" })
-  async getFile(@AuthUser() authUser: AuthUserContext, @Param("id") fileId: string) {
-    const file = await this.filesService.getFile({ userId: authUser.userId }, fileId);
+  async getFile(
+    @AuthUser() authUser: AuthUserContext,
+    @Param("id") fileId: string,
+  ) {
+    const file = await this.filesService.getFile(
+      { userId: authUser.userId },
+      fileId,
+    );
     return { file };
   }
 
@@ -127,7 +134,10 @@ export class FilesController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Move file to trash" })
   @ApiResponse({ status: 204, description: "File trashed" })
-  async trashFile(@AuthUser() authUser: AuthUserContext, @Param("id") fileId: string) {
+  async trashFile(
+    @AuthUser() authUser: AuthUserContext,
+    @Param("id") fileId: string,
+  ) {
     await this.filesService.trashFile({ userId: authUser.userId }, fileId);
   }
 
@@ -139,7 +149,10 @@ export class FilesController {
     @AuthUser() authUser: AuthUserContext,
     @Param("id") fileId: string,
   ) {
-    const file = await this.filesService.restoreFile({ userId: authUser.userId }, fileId);
+    const file = await this.filesService.restoreFile(
+      { userId: authUser.userId },
+      fileId,
+    );
     return { file };
   }
 
@@ -151,7 +164,10 @@ export class FilesController {
     @AuthUser() authUser: AuthUserContext,
     @Param("id") fileId: string,
   ) {
-    await this.filesService.permanentlyDeleteFile({ userId: authUser.userId }, fileId);
+    await this.filesService.permanentlyDeleteFile(
+      { userId: authUser.userId },
+      fileId,
+    );
   }
 
   @Patch(":id/favorite")

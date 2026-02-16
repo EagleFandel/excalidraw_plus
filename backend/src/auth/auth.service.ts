@@ -1,15 +1,17 @@
-import argon2 from "argon2";
 import { randomBytes, timingSafeEqual } from "crypto";
+
+import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import { Inject, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
-import { AuditService } from "../audit/audit.service";
 import {
   EmailAlreadyExistsError,
   InvalidCredentialsError,
 } from "../common/exceptions/domain-errors";
-import { UsersService } from "../users/users.service";
+
+import type { AuditService } from "../audit/audit.service";
+import type { UsersService } from "../users/users.service";
 
 import type { Response } from "express";
 import type { StringValue } from "ms";
@@ -87,7 +89,8 @@ export class AuthService {
   }
 
   setAuthCookie(response: Response, user: AuthUser) {
-    const jwtSecret = this.configService.get<string>("JWT_SECRET") || "change-me";
+    const jwtSecret =
+      this.configService.get<string>("JWT_SECRET") || "change-me";
     const jwtExpiresIn =
       (this.configService.get<string>("JWT_EXPIRES_IN") as
         | StringValue
@@ -136,7 +139,8 @@ export class AuthService {
       return null;
     }
 
-    const jwtSecret = this.configService.get<string>("JWT_SECRET") || "change-me";
+    const jwtSecret =
+      this.configService.get<string>("JWT_SECRET") || "change-me";
 
     try {
       const decoded = jwt.verify(cookieValue, jwtSecret) as JwtPayload;
@@ -187,7 +191,10 @@ export class AuthService {
     return randomBytes(32).toString("hex");
   }
 
-  verifyCsrfToken(cookieToken: string | undefined, headerToken: string | undefined) {
+  verifyCsrfToken(
+    cookieToken: string | undefined,
+    headerToken: string | undefined,
+  ) {
     if (!cookieToken || !headerToken) {
       return false;
     }

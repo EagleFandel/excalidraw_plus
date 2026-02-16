@@ -1,12 +1,7 @@
-import {
-  loginIcon,
-  eyeIcon,
-} from "@excalidraw/excalidraw/components/icons";
+import { loginIcon, eyeIcon } from "@excalidraw/excalidraw/components/icons";
 import { MainMenu } from "@excalidraw/excalidraw/index";
 import React from "react";
 import { t } from "@excalidraw/excalidraw/i18n";
-
-import type { AuthDialogMode } from "../auth/auth-dialog";
 
 import { isDevEnv } from "@excalidraw/common";
 
@@ -15,6 +10,8 @@ import type { Theme } from "@excalidraw/element/types";
 import { LanguageList } from "../app-language/LanguageList";
 
 import { saveDebugState } from "./DebugCanvas";
+
+import type { AuthDialogMode } from "../auth/auth-dialog";
 
 export const AppMainMenu: React.FC<{
   onCollabDialogOpen: () => any;
@@ -46,10 +43,14 @@ export const AppMainMenu: React.FC<{
       <MainMenu.DefaultItems.Socials />
       <MainMenu.Item
         icon={loginIcon}
-        onClick={() => props.onAuthClick(props.isSignedIn ? "signin" : "signup")}
+        onClick={() =>
+          props.onAuthClick(props.isSignedIn ? "signin" : "signup")
+        }
         className="highlighted"
       >
-        {props.isSignedIn ? t("excPlus.auth.account") : t("excPlus.auth.signIn")}
+        {props.isSignedIn
+          ? t("excPlus.auth.account")
+          : t("excPlus.auth.signIn")}
       </MainMenu.Item>
       {isDevEnv() && (
         <MainMenu.Item

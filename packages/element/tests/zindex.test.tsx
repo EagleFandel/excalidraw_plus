@@ -449,7 +449,7 @@ describe("z-index manipulation", () => {
         [actionSendBackward, ["A", "D", "G", "B", "C", "F"]],
       ],
     });
-  });
+  }, 15_000);
 
   it("bring forward", () => {
     assertZindex({

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 
-import { PrismaService } from "../prisma/prisma.service";
+import type { PrismaService } from "../prisma/prisma.service";
 
 type AuditAction =
   | "AUTH_REGISTER"
@@ -10,7 +10,11 @@ type AuditAction =
   | "TEAM_MEMBER_ROLE_UPDATE"
   | "TEAM_MEMBER_REMOVE"
   | "FILE_DELETE_SOFT"
-  | "FILE_DELETE_PERMANENT";
+  | "FILE_DELETE_PERMANENT"
+  | "COLLAB_SCENE_SAVE"
+  | "COLLAB_ASSET_SAVE"
+  | "AI_DIAGRAM_TO_CODE"
+  | "AI_TEXT_TO_DIAGRAM";
 
 @Injectable()
 export class AuditService {
@@ -36,4 +40,3 @@ export class AuditService {
     });
   }
 }
-

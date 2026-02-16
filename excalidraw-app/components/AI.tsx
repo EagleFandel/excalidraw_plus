@@ -12,12 +12,25 @@ import { safelyParseJSON } from "@excalidraw/common";
 
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 
+import {
+  ensureCsrfToken,
+  fetchWithCsrf,
+  getCsrfHeaderName,
+} from "../auth/csrf";
 import { TTDIndexedDBAdapter } from "../data/TTDStorage";
+
+const AI_API_BASE =
+  import.meta.env.VITE_APP_AI_BACKEND ||
+  import.meta.env.VITE_APP_AUTH_API_URL ||
+  import.meta.env.VITE_APP_FILES_API_URL ||
+  "";
 
 export const AIComponents = ({
   excalidrawAPI,
+  onAuthRequired,
 }: {
   excalidrawAPI: ExcalidrawImperativeAPI;
+  onAuthRequired?: () => void;
 }) => {
   return (
     <>
@@ -41,10 +54,8 @@ export const AIComponents = ({
 
           const textFromFrameChildren = getTextFromElements(children);
 
-          const response = await fetch(
-            `${
-              import.meta.env.VITE_APP_AI_BACKEND
-            }/v1/ai/diagram-to-code/generate`,
+          const response = await fetchWithCsrf(
+            `${AI_API_BASE}/ai/diagram-to-code/generate`,
             {
               method: "POST",
               headers: {
@@ -60,6 +71,10 @@ export const AIComponents = ({
           );
 
           if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+              onAuthRequired?.();
+            }
+
             const text = await response.text();
             const errorJSON = safelyParseJSON(text);
 
@@ -103,17 +118,23 @@ export const AIComponents = ({
       <TTDDialog
         onTextSubmit={async (props) => {
           const { onChunk, onStreamCreated, signal, messages } = props;
+          const csrfToken = await ensureCsrfToken();
 
           const result = await TTDStreamFetch({
-            url: `${
-              import.meta.env.VITE_APP_AI_BACKEND
-            }/v1/ai/text-to-diagram/chat-streaming`,
+            url: `${AI_API_BASE}/ai/text-to-diagram/chat-streaming`,
             messages,
             onChunk,
             onStreamCreated,
             extractRateLimits: true,
             signal,
+            headers: {
+              [getCsrfHeaderName()]: csrfToken,
+            },
+            credentials: "include",
           });
+          if (result.error?.status === 401 || result.error?.status === 403) {
+            onAuthRequired?.();
+          }
 
           return result;
         }}

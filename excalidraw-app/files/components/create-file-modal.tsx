@@ -56,7 +56,10 @@ export const CreateFileModal = ({
         />
 
         <div className="CreateFileModal__scope">
-          <label className="CreateFileModal__fieldLabel" htmlFor="create-file-scope">
+          <label
+            className="CreateFileModal__fieldLabel"
+            htmlFor="create-file-scope"
+          >
             {t("excPlus.files.create.scope")}
           </label>
           <select
@@ -80,7 +83,10 @@ export const CreateFileModal = ({
 
         {scope === "team" && (
           <div className="CreateFileModal__scope">
-            <label className="CreateFileModal__fieldLabel" htmlFor="create-file-team">
+            <label
+              className="CreateFileModal__fieldLabel"
+              htmlFor="create-file-team"
+            >
               {t("excPlus.teams.currentTeam")}
             </label>
             <select
@@ -98,7 +104,9 @@ export const CreateFileModal = ({
           </div>
         )}
 
-        {!!errorMessage && <div className="CreateFileModal__error">{errorMessage}</div>}
+        {!!errorMessage && (
+          <div className="CreateFileModal__error">{errorMessage}</div>
+        )}
 
         <FilledButton
           size="large"
@@ -139,4 +147,3 @@ export const CreateFileModal = ({
     </Dialog>
   );
 };
-

@@ -7,9 +7,7 @@ type RequestLike = {
   socket?: { remoteAddress?: string | null };
 };
 
-const parseFirstHeaderToken = (
-  value?: string | string[],
-): string | null => {
+const parseFirstHeaderToken = (value?: string | string[]): string | null => {
   if (Array.isArray(value)) {
     const first = value[0]?.split(",")[0]?.trim();
     return first || null;

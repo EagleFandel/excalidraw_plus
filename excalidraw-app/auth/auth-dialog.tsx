@@ -111,7 +111,9 @@ export const AuthDialog = ({
           />
         )}
 
-        {errorMessage && <div className="AuthDialog__error">{errorMessage}</div>}
+        {errorMessage && (
+          <div className="AuthDialog__error">{errorMessage}</div>
+        )}
 
         <FilledButton
           size="large"
@@ -122,8 +124,8 @@ export const AuthDialog = ({
                 ? t("excPlus.auth.signingUp")
                 : t("excPlus.auth.signingIn")
               : isSignUp
-                ? t("excPlus.auth.signUp")
-                : t("excPlus.auth.signIn")
+              ? t("excPlus.auth.signUp")
+              : t("excPlus.auth.signIn")
           }
           onClick={async () => {
             if (!email.trim() || !password.trim()) {
@@ -175,4 +177,3 @@ export const AuthDialog = ({
     </Dialog>
   );
 };
-

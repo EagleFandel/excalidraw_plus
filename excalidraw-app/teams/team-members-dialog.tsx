@@ -60,7 +60,11 @@ export const TeamMembersDialog = ({
       size="small"
       onCloseRequest={onClose}
     >
-      <div className="TeamMembersDialog" role="region" aria-label={t("excPlus.teams.membersDialog.regionAria")}>
+      <div
+        className="TeamMembersDialog"
+        role="region"
+        aria-label={t("excPlus.teams.membersDialog.regionAria")}
+      >
         <div className="TeamMembersDialog__headerActions">
           <FilledButton
             size="medium"
@@ -80,7 +84,9 @@ export const TeamMembersDialog = ({
               label={t("excPlus.teams.membersDialog.inviteEmail")}
               value={inviteEmail}
               onChange={setInviteEmail}
-              placeholder={t("excPlus.teams.membersDialog.inviteEmailPlaceholder")}
+              placeholder={t(
+                "excPlus.teams.membersDialog.inviteEmailPlaceholder",
+              )}
               fullWidth
             />
 
@@ -95,7 +101,9 @@ export const TeamMembersDialog = ({
               className="TeamMembersDialog__roleSelect"
               value={inviteRole}
               aria-label={t("excPlus.teams.membersDialog.roleSelectAria")}
-              onChange={(event) => setInviteRole(event.target.value as TeamRole)}
+              onChange={(event) =>
+                setInviteRole(event.target.value as TeamRole)
+              }
             >
               <option value="owner">{t("excPlus.teams.roles.owner")}</option>
               <option value="admin">{t("excPlus.teams.roles.admin")}</option>
@@ -183,9 +191,15 @@ export const TeamMembersDialog = ({
                     });
                   }}
                 >
-                  <option value="owner">{t("excPlus.teams.roles.owner")}</option>
-                  <option value="admin">{t("excPlus.teams.roles.admin")}</option>
-                  <option value="member">{t("excPlus.teams.roles.member")}</option>
+                  <option value="owner">
+                    {t("excPlus.teams.roles.owner")}
+                  </option>
+                  <option value="admin">
+                    {t("excPlus.teams.roles.admin")}
+                  </option>
+                  <option value="member">
+                    {t("excPlus.teams.roles.member")}
+                  </option>
                 </select>
 
                 <button
@@ -228,4 +242,3 @@ export const TeamMembersDialog = ({
     </Dialog>
   );
 };
-

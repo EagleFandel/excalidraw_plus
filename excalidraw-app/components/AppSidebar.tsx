@@ -9,16 +9,17 @@ import { useUIAppState } from "@excalidraw/excalidraw/context/ui-appState";
 import clsx from "clsx";
 import { t } from "@excalidraw/excalidraw/i18n";
 
-import "./AppSidebar.scss";
+import { FileListItemActions } from "../files/components/file-list-item-actions";
+import { FileListToolbar } from "../files/components/file-list-toolbar";
+
 import "../files/components/files-ui.scss";
+
+import "./AppSidebar.scss";
 
 import type { PersonalFileMeta } from "../files/files-api";
 import type { TeamRecord } from "../teams/teams-api";
 import type { FilesScope } from "../teams/teams-jotai";
 import type { FileListSort } from "../files/files-jotai";
-
-import { FileListItemActions } from "../files/components/file-list-item-actions";
-import { FileListToolbar } from "../files/components/file-list-toolbar";
 
 export const AppSidebar = ({
   files,
@@ -94,7 +95,8 @@ export const AppSidebar = ({
 
   const activeTeam = teams.find((team) => team.id === currentTeamId) || null;
   const canManageMembers =
-    !!activeTeam && (activeTeam.role === "owner" || activeTeam.role === "admin");
+    !!activeTeam &&
+    (activeTeam.role === "owner" || activeTeam.role === "admin");
 
   return (
     <DefaultSidebar>
@@ -109,7 +111,9 @@ export const AppSidebar = ({
       <Sidebar.Tab tab="myFiles">
         <div className="app-sidebar-files-container">
           <div className="app-sidebar-files-header">
-            <div className="app-sidebar-files-title">{t("excPlus.files.myFiles")}</div>
+            <div className="app-sidebar-files-title">
+              {t("excPlus.files.myFiles")}
+            </div>
             <div
               className={clsx("app-sidebar-sync-status", {
                 "is-syncing": syncState === "syncing",
@@ -217,7 +221,9 @@ export const AppSidebar = ({
               )}
 
               {isLoading && (
-                <div className="app-sidebar-files-empty">{t("excPlus.files.loadingFiles")}</div>
+                <div className="app-sidebar-files-empty">
+                  {t("excPlus.files.loadingFiles")}
+                </div>
               )}
 
               {errorMessage && (
@@ -237,7 +243,9 @@ export const AppSidebar = ({
                 currentScope === "trash" &&
                 !trashedFiles.length &&
                 !errorMessage && (
-                  <div className="app-sidebar-files-empty">{t("excPlus.files.emptyTrash")}</div>
+                  <div className="app-sidebar-files-empty">
+                    {t("excPlus.files.emptyTrash")}
+                  </div>
                 )}
 
               {!!files.length && currentScope !== "trash" && (
@@ -252,11 +260,15 @@ export const AppSidebar = ({
                       <button
                         type="button"
                         className="app-sidebar-file-open"
-                        aria-label={t("excPlus.files.openAria", { title: item.title })}
+                        aria-label={t("excPlus.files.openAria", {
+                          title: item.title,
+                        })}
                         onClick={() => onOpenFile(item.id)}
                       >
                         <div className="app-sidebar-file-item-title">
-                          {item.isFavorite ? `${t("excPlus.files.favoriteTag")} ` : ""}
+                          {item.isFavorite
+                            ? `${t("excPlus.files.favoriteTag")} `
+                            : ""}
                           {item.title}
                         </div>
                         <div className="app-sidebar-file-item-meta">
@@ -293,7 +305,9 @@ export const AppSidebar = ({
                       <button
                         type="button"
                         className="app-sidebar-file-restore"
-                        aria-label={t("excPlus.files.restoreAria", { title: item.title })}
+                        aria-label={t("excPlus.files.restoreAria", {
+                          title: item.title,
+                        })}
                         onClick={() => onRestoreFile(item.id)}
                       >
                         {t("excPlus.files.restore")}

@@ -1,13 +1,16 @@
-import {
+import { randomUUID } from "crypto";
+
+import { HttpException, Injectable, Logger } from "@nestjs/common";
+
+import { tap } from "rxjs";
+
+import type {
   CallHandler,
   ExecutionContext,
-  HttpException,
-  Injectable,
-  Logger,
   NestInterceptor,
 } from "@nestjs/common";
-import { randomUUID } from "crypto";
-import { Observable, tap } from "rxjs";
+
+import type { Observable } from "rxjs";
 
 type RequestLike = {
   method?: string;
@@ -34,9 +37,8 @@ export class RequestLogInterceptor implements NestInterceptor {
 
     const requestIdHeader = request.headers?.["x-request-id"];
     const requestId =
-      (Array.isArray(requestIdHeader)
-        ? requestIdHeader[0]
-        : requestIdHeader) || randomUUID();
+      (Array.isArray(requestIdHeader) ? requestIdHeader[0] : requestIdHeader) ||
+      randomUUID();
 
     request.requestId = requestId;
     response.setHeader?.("x-request-id", requestId);
@@ -64,7 +66,8 @@ export class RequestLogInterceptor implements NestInterceptor {
               ? Number((error as { status: number }).status)
               : 500;
           const statusCode =
-            typeof response.statusCode === "number" && response.statusCode >= 400
+            typeof response.statusCode === "number" &&
+            response.statusCode >= 400
               ? response.statusCode
               : fallbackStatus;
 
@@ -76,7 +79,9 @@ export class RequestLogInterceptor implements NestInterceptor {
               status: statusCode,
               latencyMs,
               error:
-                error instanceof Error ? error.message : String(error || "unknown"),
+                error instanceof Error
+                  ? error.message
+                  : String(error || "unknown"),
             }),
           );
         },

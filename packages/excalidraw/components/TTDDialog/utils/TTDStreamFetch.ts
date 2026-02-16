@@ -17,6 +17,8 @@ interface StreamingOptions {
   extractRateLimits?: boolean;
   signal?: AbortSignal;
   onStreamCreated?: () => void;
+  headers?: HeadersInit;
+  credentials?: RequestCredentials;
 }
 
 export type StreamChunk =
@@ -94,6 +96,8 @@ export async function TTDStreamFetch(
     onStreamCreated,
     extractRateLimits = true,
     signal,
+    headers,
+    credentials,
   } = options;
 
   try {
@@ -101,14 +105,23 @@ export async function TTDStreamFetch(
     let rateLimitInfo: RateLimitInfo = {};
     let error: RequestError | null = null;
 
+    const requestHeaders = new Headers({
+      Accept: "text/event-stream",
+      "Content-Type": "application/json",
+    });
+    if (headers) {
+      const incomingHeaders = new Headers(headers);
+      for (const [key, value] of incomingHeaders.entries()) {
+        requestHeaders.set(key, value);
+      }
+    }
+
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        Accept: "text/event-stream",
-        "Content-Type": "application/json",
-      },
+      headers: requestHeaders,
       body: JSON.stringify({ messages }),
       signal,
+      credentials,
     });
 
     if (extractRateLimits) {

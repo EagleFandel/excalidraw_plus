@@ -21,7 +21,10 @@ export const FileListToolbar = ({
   const { t } = useI18n();
 
   return (
-    <div className="app-sidebar-toolbar" aria-label={t("excPlus.files.toolbar")}> 
+    <div
+      className="app-sidebar-toolbar"
+      aria-label={t("excPlus.files.toolbar")}
+    >
       <TextField
         label={t("excPlus.files.search")}
         value={query}
@@ -46,7 +49,10 @@ export const FileListToolbar = ({
         </select>
       </div>
 
-      <label className="app-sidebar-toolbar-checkbox" htmlFor="favorites-only-checkbox">
+      <label
+        className="app-sidebar-toolbar-checkbox"
+        htmlFor="favorites-only-checkbox"
+      >
         <input
           id="favorites-only-checkbox"
           type="checkbox"
@@ -58,4 +64,3 @@ export const FileListToolbar = ({
     </div>
   );
 };
-

@@ -1,14 +1,9 @@
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from "@nestjs/common";
-import type { Response } from "express";
+import { Catch, HttpException, HttpStatus, Logger } from "@nestjs/common";
 
 import { DomainError } from "../exceptions/domain-errors";
+
+import type { ArgumentsHost, ExceptionFilter } from "@nestjs/common";
+import type { Response } from "express";
 
 type RequestLike = {
   requestId?: string;
@@ -34,9 +29,8 @@ const getMessageFromHttpExceptionBody = (
       return message;
     }
 
-    const nestedMessage = (
-      body as { error?: { message?: string } }
-    ).error?.message;
+    const nestedMessage = (body as { error?: { message?: string } }).error
+      ?.message;
     if (typeof nestedMessage === "string" && nestedMessage.trim()) {
       return nestedMessage;
     }
@@ -138,9 +132,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const body = exception.getResponse();
 
       if (status === HttpStatus.SERVICE_UNAVAILABLE) {
-        response.status(HttpStatus.SERVICE_UNAVAILABLE).json(
-          typeof body === "object" && body ? body : { ok: false, db: false },
-        );
+        response
+          .status(HttpStatus.SERVICE_UNAVAILABLE)
+          .json(
+            typeof body === "object" && body ? body : { ok: false, db: false },
+          );
         return;
       }
 
@@ -182,12 +178,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       });
 
       if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
-        logError(
-          status,
-          errorCode,
-          message,
-          exception.stack,
-        );
+        logError(status, errorCode, message, exception.stack);
       }
       return;
     }

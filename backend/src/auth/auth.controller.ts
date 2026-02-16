@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  ExecutionContext,
   Get,
   HttpCode,
   HttpStatus,
@@ -9,16 +8,15 @@ import {
   Req,
   Res,
 } from "@nestjs/common";
-import {
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from "@nestjs/swagger";
+import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
 import { Throttle } from "@nestjs/throttler";
-import { AuthService } from "./auth.service";
-import { LoginDto } from "./dto/login.dto";
-import { RegisterDto } from "./dto/register.dto";
+
+import type { ExecutionContext } from "@nestjs/common";
+
+import type { AuthService } from "./auth.service";
+import type { LoginDto } from "./dto/login.dto";
+import type { RegisterDto } from "./dto/register.dto";
 
 import type { Request, Response } from "express";
 
@@ -29,9 +27,11 @@ type RequestWithCookies = Request & {
 const getConfigServiceFromContext = (
   context: ExecutionContext,
 ): ConfigService | null => {
-  const request = context.switchToHttp().getRequest<RequestWithCookies & {
-    app?: { get?: (token: unknown) => unknown };
-  }>();
+  const request = context.switchToHttp().getRequest<
+    RequestWithCookies & {
+      app?: { get?: (token: unknown) => unknown };
+    }
+  >();
 
   const resolved = request.app?.get?.(ConfigService);
   return resolved instanceof ConfigService ? resolved : null;
@@ -71,7 +71,10 @@ export class AuthController {
   @ApiOperation({ summary: "Register account" })
   @ApiResponse({ status: 201, description: "Registered successfully" })
   @ApiResponse({ status: 409, description: "Email already registered" })
-  async register(@Body() input: RegisterDto, @Res({ passthrough: true }) response: Response) {
+  async register(
+    @Body() input: RegisterDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const user = await this.authService.register({
       email: input.email.trim().toLowerCase(),
       password: input.password,
@@ -95,7 +98,10 @@ export class AuthController {
   @ApiOperation({ summary: "Login with email and password" })
   @ApiResponse({ status: 200, description: "Logged in" })
   @ApiResponse({ status: 401, description: "Invalid credentials" })
-  async login(@Body() input: LoginDto, @Res({ passthrough: true }) response: Response) {
+  async login(
+    @Body() input: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const user = await this.authService.login({
       email: input.email.trim().toLowerCase(),
       password: input.password,
@@ -123,7 +129,10 @@ export class AuthController {
     await this.authService.logLogout(payload?.sub || null, payload?.email);
 
     this.authService.clearAuthCookie(response);
-    this.authService.setCsrfCookie(response, this.authService.generateCsrfToken());
+    this.authService.setCsrfCookie(
+      response,
+      this.authService.generateCsrfToken(),
+    );
   }
 
   @Get("me")

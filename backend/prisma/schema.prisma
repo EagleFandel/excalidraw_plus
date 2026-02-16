@@ -108,3 +108,37 @@ model AuditLog {
   @@index([teamId, createdAt])
   @@index([fileId, createdAt])
 }
+
+model CollabRoom {
+  id             String                @id
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  lastActivityAt DateTime              @default(now())
+  sceneSnapshot  CollabSceneSnapshot?
+  assets         CollabAsset[]
+
+  @@index([lastActivityAt])
+}
+
+model CollabSceneSnapshot {
+  roomId       String    @id
+  sceneVersion Int
+  iv           Bytes
+  ciphertext   Bytes
+  updatedAt    DateTime  @updatedAt
+
+  room         CollabRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
+
+model CollabAsset {
+  roomId    String
+  fileId    String
+  blob      Bytes
+  sizeBytes Int
+  updatedAt DateTime @updatedAt
+
+  room      CollabRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, fileId])
+  @@index([updatedAt])
+}
